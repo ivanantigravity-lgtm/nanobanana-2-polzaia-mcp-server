@@ -1,5 +1,7 @@
 # Nano Banana 2 Polza AI MCP Server
 
+`mcp-name: io.github.ivanantigravity-lgtm/nanobanana-2-polzaia-mcp-server`
+
 MCP server for image generation and editing through `Polza AI`, using:
 
 - `google/gemini-3.1-flash-image-preview` as the default Nano Banana 2 model

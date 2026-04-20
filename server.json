@@ -6,13 +6,13 @@
     "url": "https://github.com/ivanantigravity-lgtm/nanobanana-2-polzaia-mcp-server",
     "source": "github"
   },
-  "version": "0.4.4",
+  "version": "0.4.5",
   "packages": [
     {
       "registryType": "pypi",
       "registryBaseUrl": "https://pypi.org",
       "identifier": "nanobanana-2-polzaia-mcp-server",
-      "version": "0.4.4",
+      "version": "0.4.5",
       "transport": {
         "type": "stdio"
       }
