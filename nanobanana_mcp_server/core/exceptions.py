@@ -1,4 +1,4 @@
-"""Custom exceptions for the Nano Banana 2 Polza AI MCP Server."""
+"""Custom exceptions for the Nano Banana 2 Polza MCP Server."""
 
 
 class NanoBananaError(Exception):

@@ -26,7 +26,7 @@ class NanoBananaMCP:
         """Get server description and instructions."""
         return (
             "This server exposes image generation & editing powered by "
-            "Polza AI media APIs, using Google Nano Banana model family by default — "
+            "Polza media APIs, using Google Nano Banana model family by default — "
             "Gemini 3.1 Flash Image (Nano Banana 2), Gemini 3 Pro Image, "
             "and Gemini 2.5 Flash Image. "
             "Returns images as real MCP image content blocks, and also provides structured "

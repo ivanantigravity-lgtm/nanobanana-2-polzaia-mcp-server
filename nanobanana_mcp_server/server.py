@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Nano Banana 2 Polza AI MCP Server - Main Entry Point."""
+"""Nano Banana 2 Polza MCP Server - Main Entry Point."""
 
 import sys
 import os
@@ -25,7 +25,7 @@ def create_app():
         setup_logging(level=log_level, format_type=log_format)
 
     logger = logging.getLogger(__name__)
-    logger.info("Initializing Nano Banana 2 Polza AI MCP Server...")
+    logger.info("Initializing Nano Banana 2 Polza MCP Server...")
 
     try:
         # Load configuration
@@ -66,7 +66,7 @@ def create_wrapper_app() -> NanoBananaMCP:
         setup_logging(level=log_level, format_type=log_format)
 
     logger = logging.getLogger(__name__)
-    logger.info("Initializing Nano Banana 2 Polza AI MCP Server...")
+    logger.info("Initializing Nano Banana 2 Polza MCP Server...")
 
     try:
         # Load configuration
@@ -106,7 +106,7 @@ def main():
     logger = logging.getLogger(__name__)
 
     try:
-        logger.info("Starting Nano Banana 2 Polza AI MCP Server...")
+        logger.info("Starting Nano Banana 2 Polza MCP Server...")
         logger.info(f"Python version: {sys.version}")
         logger.info(f"Working directory: {os.getcwd()}")
 

@@ -19,7 +19,7 @@
   "server": {
     "name": "nanobanana-2-polzaia-mcp-server",
     "version": "0.4.5",
-    "description": "Nano Banana image generation through the Polza AI media API",
+    "description": "Nano Banana image generation through the Polza media API",
     "entrypoint": "nanobanana_mcp_server.server:create_app",
     "dependencies": [
       "fastmcp>=2.11.0",
@@ -36,12 +36,12 @@
     "environment": {
       "POLZA_AI_API_KEY": {
         "required": true,
-        "description": "Polza AI API key for media generation"
+        "description": "Polza API key for media generation"
       },
       "POLZA_BASE_URL": {
         "required": false,
         "default": "https://polza.ai/api",
-        "description": "Base URL for the Polza AI API"
+        "description": "Base URL for the Polza API"
       },
       "IMAGE_OUTPUT_DIR": {
         "required": false,

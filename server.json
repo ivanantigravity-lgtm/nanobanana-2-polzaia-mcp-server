@@ -1,7 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json",
   "name": "io.github.ivanantigravity-lgtm/nanobanana-2-polzaia-mcp-server",
-  "description": "Nano Banana MCP server backed by Polza AI media and storage APIs.",
+  "description": "Nano Banana MCP server backed by Polza media and storage APIs.",
   "repository": {
     "url": "https://github.com/ivanantigravity-lgtm/nanobanana-2-polzaia-mcp-server",
     "source": "github"
