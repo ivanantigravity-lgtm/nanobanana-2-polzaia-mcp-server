@@ -1,15 +1,9 @@
-"""
-Nano Banana MCP Server - AI-powered image generation and editing via Gemini 2.5 Flash Image.
+"""Nano Banana 2 Polza AI MCP Server."""
 
-A production-ready Model Context Protocol server built with FastMCP.
-"""
-
-__version__ = "0.4.4"
-__author__ = "Nano Banana Team"
+__version__ = "0.4.5"
+__author__ = "ivanantigravity-lgtm"
 __email__ = "team@nanobanana.dev"
-__description__ = (
-    "A production-ready MCP server for AI-powered image generation using Gemini 2.5 Flash Image"
-)
+__description__ = "Nano Banana MCP server backed by Polza AI media and storage APIs"
 
 from .server import create_app, create_wrapper_app, main
 

@@ -1,4 +1,4 @@
-"""Custom exceptions for the Nano Banana MCP Server."""
+"""Custom exceptions for the Nano Banana 2 Polza AI MCP Server."""
 
 
 class NanoBananaError(Exception):
@@ -20,7 +20,7 @@ class ValidationError(NanoBananaError):
 
 
 class GeminiAPIError(NanoBananaError):
-    """Raised when Gemini API calls fail."""
+    """Raised when upstream media API calls fail."""
 
     pass
 
@@ -44,6 +44,6 @@ class AuthenticationError(NanoBananaError):
 
 
 class ADCConfigurationError(AuthenticationError):
-    """Raised when ADC/Vertex AI configuration is invalid."""
+    """Raised when an unsupported legacy authentication mode is requested."""
 
     pass

@@ -20,13 +20,13 @@ class ModelTier(str, Enum):
 class AuthMethod(Enum):
     """Authentication method options."""
 
-    API_KEY = "api_key"  # Developer API + API Key
-    VERTEX_AI = "vertex_ai"  # Vertex AI API + ADC
-    AUTO = "auto"  # Auto-detect
+    API_KEY = "api_key"
+    VERTEX_AI = "vertex_ai"
+    AUTO = "auto"
 
 
 class ThinkingLevel(str, Enum):
-    """Gemini 3 thinking levels for advanced reasoning."""
+    """Reasoning level hints for model selection."""
 
     LOW = "low"  # Minimal latency, less reasoning
     HIGH = "high"  # Maximum reasoning (default for Pro)
@@ -45,7 +45,7 @@ class ServerConfig:
     """Server configuration settings."""
 
     gemini_api_key: str | None = None
-    server_name: str = "nanobanana-mcp-server"
+    server_name: str = "nanobanana-2-polzaia-mcp-server"
     transport: str = "stdio"  # stdio or http
     host: str = "127.0.0.1"
     port: int = 9000
@@ -79,11 +79,8 @@ class ServerConfig:
             or os.getenv("GOOGLE_API_KEY")
         )
         gcp_project = os.getenv("GCP_PROJECT_ID") or os.getenv("GOOGLE_CLOUD_PROJECT")
-        # Default to "global" for gemini-3-pro-image-preview compatibility
-        # Users can override via GCP_REGION or GOOGLE_CLOUD_LOCATION env vars
         gcp_region = os.getenv("GCP_REGION") or os.getenv("GOOGLE_CLOUD_LOCATION") or "global"
 
-        # Validation logic
         if auth_method == AuthMethod.API_KEY:
             if not api_key:
                 raise ValueError(AUTH_ERROR_MESSAGES["api_key_required"])
@@ -91,18 +88,15 @@ class ServerConfig:
         elif auth_method == AuthMethod.VERTEX_AI:
             raise ValueError(AUTH_ERROR_MESSAGES["vertex_ai_project_required"])
 
-        else:  # AUTO
+        else:
             if not api_key:
                 raise ValueError(AUTH_ERROR_MESSAGES["no_auth_configured"])
             auth_method = AuthMethod.API_KEY
 
-        # Handle image output directory
         output_dir = os.getenv("IMAGE_OUTPUT_DIR", "").strip()
         if not output_dir:
-            # Default to ~/nanobanana-images in user's home directory for better compatibility
             output_dir = str(Path.home() / "nanobanana-images")
 
-        # Convert to absolute path and ensure it exists
         output_path = Path(output_dir).resolve()
         output_path.mkdir(parents=True, exist_ok=True)
 
