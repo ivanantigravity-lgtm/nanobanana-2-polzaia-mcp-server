@@ -22,6 +22,32 @@ This project exposes MCP tools like:
 - `Python 3.11+`
 - a `POLZA_AI_API_KEY`
 
+## Install in 2 Minutes
+
+For `Claude Code` / `VS Code`, the fastest setup is:
+
+1. Install `uv`
+2. Create a `.mcp.json` file in your project root
+3. Paste this config and add your Polza key
+
+```json
+{
+  "mcpServers": {
+    "nanobanana-polza": {
+      "command": "uvx",
+      "args": ["nanobanana-2-polzaia-mcp-server@latest"],
+      "env": {
+        "POLZA_AI_API_KEY": "your-polza-api-key-here",
+        "POLZA_BASE_URL": "https://polza.ai/api",
+        "IMAGE_OUTPUT_DIR": "/Users/yourname/Documents/nanobanana"
+      }
+    }
+  }
+}
+```
+
+Then restart Claude Code / VS Code.
+
 ## Local Development
 
 ```bash
