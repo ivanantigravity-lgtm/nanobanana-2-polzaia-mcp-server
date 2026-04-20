@@ -213,25 +213,23 @@ def validate_aspect_ratio_string(aspect_ratio: str, *, allow_extreme: bool = Fal
     Validate aspect ratio string format and supported values.
 
     Validates that the aspect ratio string matches one of the values
-    supported by the Gemini API.
+    supported by the Polza Nano Banana API.
 
     Args:
         aspect_ratio: Aspect ratio string (e.g., "16:9", "4:3")
-        allow_extreme: Whether to allow NB2-only extreme aspect ratios
+        allow_extreme: Unused in the Polza adapter. Kept for backward compatibility.
 
     Raises:
         ValidationError: If aspect ratio is invalid or unsupported
 
     Supported aspect ratios:
-        Standard: 1:1, 2:3, 3:2, 3:4, 4:3, 4:5, 5:4, 9:16, 16:9, 21:9
-        Extreme (NB2 only): 4:1, 1:4, 8:1, 1:8
+        auto, 1:1, 2:3, 3:2, 3:4, 4:3, 4:5, 5:4, 9:16, 16:9, 21:9
     """
     if not isinstance(aspect_ratio, str):
         raise ValidationError("Aspect ratio must be a string")
 
-    # Supported aspect ratios according to Gemini API documentation
-    # https://ai.google.dev/gemini-api/docs/image-generation#optional_configurations
     SUPPORTED_ASPECT_RATIOS = [
+        "auto",
         "1:1",
         "2:3",
         "3:2",
@@ -243,8 +241,6 @@ def validate_aspect_ratio_string(aspect_ratio: str, *, allow_extreme: bool = Fal
         "16:9",
         "21:9",
     ]
-    if allow_extreme:
-        SUPPORTED_ASPECT_RATIOS.extend(["4:1", "1:4", "8:1", "1:8"])
 
     if aspect_ratio not in SUPPORTED_ASPECT_RATIOS:
         raise ValidationError(

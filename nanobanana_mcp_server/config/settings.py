@@ -5,7 +5,6 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from ..core.exceptions import ADCConfigurationError
 from .constants import AUTH_ERROR_MESSAGES
 
 
@@ -58,6 +57,9 @@ class ServerConfig:
     gcp_project_id: str | None = None
     gcp_region: str = "us-central1"
     gemini_base_url: str | None = None
+    polza_poll_interval_seconds: float = 2.0
+    polza_poll_timeout_seconds: int = 120
+    polza_external_user_id: str | None = None
 
     @classmethod
     def from_env(cls) -> "ServerConfig":
@@ -71,7 +73,11 @@ class ServerConfig:
         except ValueError:
             auth_method = AuthMethod.AUTO
 
-        api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+        api_key = (
+            os.getenv("POLZA_AI_API_KEY")
+            or os.getenv("GEMINI_API_KEY")
+            or os.getenv("GOOGLE_API_KEY")
+        )
         gcp_project = os.getenv("GCP_PROJECT_ID") or os.getenv("GOOGLE_CLOUD_PROJECT")
         # Default to "global" for gemini-3-pro-image-preview compatibility
         # Users can override via GCP_REGION or GOOGLE_CLOUD_LOCATION env vars
@@ -83,16 +89,12 @@ class ServerConfig:
                 raise ValueError(AUTH_ERROR_MESSAGES["api_key_required"])
 
         elif auth_method == AuthMethod.VERTEX_AI:
-            if not gcp_project:
-                raise ADCConfigurationError(AUTH_ERROR_MESSAGES["vertex_ai_project_required"])
+            raise ValueError(AUTH_ERROR_MESSAGES["vertex_ai_project_required"])
 
         else:  # AUTO
             if not api_key:
-                if not gcp_project:
-                    raise ValueError(AUTH_ERROR_MESSAGES["no_auth_configured"])
-                auth_method = AuthMethod.VERTEX_AI
-            else:
-                auth_method = AuthMethod.API_KEY
+                raise ValueError(AUTH_ERROR_MESSAGES["no_auth_configured"])
+            auth_method = AuthMethod.API_KEY
 
         # Handle image output directory
         output_dir = os.getenv("IMAGE_OUTPUT_DIR", "").strip()
@@ -104,7 +106,12 @@ class ServerConfig:
         output_path = Path(output_dir).resolve()
         output_path.mkdir(parents=True, exist_ok=True)
 
-        gemini_base_url = os.getenv("GEMINI_BASE_URL", "").strip() or None
+        gemini_base_url = (
+            os.getenv("POLZA_BASE_URL")
+            or os.getenv("GEMINI_BASE_URL")
+            or "https://polza.ai/api"
+        )
+        gemini_base_url = gemini_base_url.strip() or "https://polza.ai/api"
 
         return cls(
             gemini_api_key=api_key,
@@ -112,6 +119,9 @@ class ServerConfig:
             gcp_project_id=gcp_project,
             gcp_region=gcp_region,
             gemini_base_url=gemini_base_url,
+            polza_poll_interval_seconds=float(os.getenv("POLZA_POLL_INTERVAL_SECONDS", "2")),
+            polza_poll_timeout_seconds=int(os.getenv("POLZA_POLL_TIMEOUT_SECONDS", "120")),
+            polza_external_user_id=os.getenv("POLZA_EXTERNAL_USER_ID") or None,
             transport=os.getenv("FASTMCP_TRANSPORT", "stdio"),
             host=os.getenv("FASTMCP_HOST", "127.0.0.1"),
             port=int(os.getenv("FASTMCP_PORT", "9000")),
@@ -167,7 +177,7 @@ class NanoBanana2Config(ProImageConfig):
     model_name: str = "gemini-3.1-flash-image-preview"
     request_timeout: int = 60  # Flash-speed model
     supports_thinking: bool = True  # Supports Minimal/High/Dynamic thinking
-    supports_extreme_aspect_ratios: bool = True  # 4:1, 1:4, 8:1, 1:8
+    supports_extreme_aspect_ratios: bool = False
 
 
 @dataclass

@@ -220,7 +220,7 @@ def test_edit_mode_flash_routes_to_enhanced_service(monkeypatch, tmp_path):
 
 
 @pytest.mark.unit
-def test_generate_mode_nb2_routes_thinking_and_extreme_aspect_ratio(monkeypatch, tmp_path):
+def test_generate_mode_nb2_routes_thinking_and_supported_aspect_ratio(monkeypatch, tmp_path):
     from nanobanana_mcp_server.config.settings import ModelTier
 
     gen_fn = _get_generate_image_fn()
@@ -248,14 +248,14 @@ def test_generate_mode_nb2_routes_thinking_and_extreme_aspect_ratio(monkeypatch,
         mode="generate",
         model_tier="nb2",
         thinking_level="high",
-        aspect_ratio="4:1",
+        aspect_ratio="21:9",
         output_path=str(out_dir) + os.sep,
     )
 
     assert nb2_service.calls, "Expected NB2 service to be called"
     assert nb2_service.calls[0][0] == "generate"
     assert nb2_service.calls[0][1]["thinking_level"].value == "high"
-    assert nb2_service.calls[0][1]["aspect_ratio"] == "4:1"
+    assert nb2_service.calls[0][1]["aspect_ratio"] == "21:9"
     assert result.structured_content["model_tier"] == "nb2"
     assert result.structured_content["thinking_level"] == "high"
-    assert result.structured_content["aspect_ratio"] == "4:1"
+    assert result.structured_content["aspect_ratio"] == "21:9"

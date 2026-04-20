@@ -11,7 +11,7 @@ def register_upload_file_tool(server: FastMCP):
 
     @server.tool(
         annotations={
-            "title": "Upload file to Gemini Files API",
+            "title": "Upload file to Polza Storage API",
             "readOnlyHint": False,
             "openWorldHint": True,
         }
@@ -20,7 +20,7 @@ def register_upload_file_tool(server: FastMCP):
         path: Annotated[
             str,
             Field(
-                description="Server-accessible file path to upload to Gemini Files API.",
+                description="Server-accessible file path to upload to Polza Storage API.",
                 min_length=1,
                 max_length=512,
             ),
@@ -32,7 +32,7 @@ def register_upload_file_tool(server: FastMCP):
         ctx: Context = None,
     ) -> ToolResult:
         """
-        Upload a local file through the Gemini Files API and return its URI & metadata.
+        Upload a local file through the Polza Storage API and return its URI & metadata.
         Useful when the image is larger than 20MB or reused across prompts.
         """
         logger = logging.getLogger(__name__)

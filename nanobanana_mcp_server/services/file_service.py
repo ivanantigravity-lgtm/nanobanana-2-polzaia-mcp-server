@@ -15,7 +15,7 @@ class FileService:
 
     def upload_file(self, file_path: str, display_name: Optional[str] = None) -> Dict[str, Any]:
         """
-        Upload a file to Gemini Files API.
+        Upload a file to Polza Storage API.
 
         Args:
             file_path: Path to the file to upload
@@ -32,7 +32,7 @@ class FileService:
 
             # Check file size
             file_size = os.path.getsize(file_path)
-            max_size = 100 * 1024 * 1024  # 100MB limit for Files API
+            max_size = 100 * 1024 * 1024
 
             if file_size > max_size:
                 raise ValidationError(
@@ -63,7 +63,7 @@ class FileService:
 
     def get_file_metadata(self, file_name: str) -> Dict[str, Any]:
         """
-        Get metadata for a file from Gemini Files API.
+        Get metadata for a file from Polza Storage API.
 
         Args:
             file_name: Name of the file (e.g., 'files/abc123')
@@ -89,6 +89,7 @@ class FileService:
                 "update_time": getattr(file_obj, "update_time", None),
                 "display_name": getattr(file_obj, "display_name", None),
                 "state": getattr(file_obj, "state", None),
+                "expires_at": getattr(file_obj, "expires_at", None),
             }
 
             self.logger.debug(f"Retrieved metadata for: {file_obj.name}")
@@ -102,17 +103,14 @@ class FileService:
 
     def list_files(self) -> Dict[str, Any]:
         """
-        List files in Gemini Files API.
+        List files in Polza Storage API.
 
         Returns:
             Dictionary with file list and summary
         """
         try:
-            self.logger.debug("Listing files from Gemini Files API")
-
-            # This would require implementing the list files functionality
-            # in the GeminiClient if available in the API
-            files = self.gemini_client.client.files.list()
+            self.logger.debug("Listing files from Polza Storage API")
+            files = self.gemini_client.list_files()
 
             file_list = []
             total_size = 0
@@ -139,7 +137,7 @@ class FileService:
 
     def delete_file(self, file_name: str) -> bool:
         """
-        Delete a file from Gemini Files API.
+        Delete a file from Polza Storage API.
 
         Args:
             file_name: Name of the file to delete
@@ -153,9 +151,7 @@ class FileService:
 
             self.logger.info(f"Deleting file: {file_name}")
 
-            # This would require implementing delete functionality
-            # in the GeminiClient if available in the API
-            self.gemini_client.client.files.delete(name=file_name)
+            self.gemini_client.delete_file(file_name)
 
             self.logger.info(f"Successfully deleted file: {file_name}")
             return True

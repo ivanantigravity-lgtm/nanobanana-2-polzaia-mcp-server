@@ -9,15 +9,15 @@ This module tests the aspect ratio feature added in PR #3, including:
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
-from google.genai import types as gx
+from unittest.mock import patch
 
 from nanobanana_mcp_server.services.gemini_client import GeminiClient
 from nanobanana_mcp_server.config.settings import ServerConfig, GeminiConfig
 
 
-# Supported aspect ratios according to Gemini API docs
+# Supported aspect ratios according to Polza Nano Banana docs
 STANDARD_ASPECT_RATIOS = [
+    "auto",
     "1:1",
     "2:3",
     "3:2",
@@ -29,8 +29,7 @@ STANDARD_ASPECT_RATIOS = [
     "16:9",
     "21:9",
 ]
-EXTREME_ASPECT_RATIOS = ["4:1", "1:4", "8:1", "1:8"]
-SUPPORTED_ASPECT_RATIOS = STANDARD_ASPECT_RATIOS + EXTREME_ASPECT_RATIOS
+SUPPORTED_ASPECT_RATIOS = STANDARD_ASPECT_RATIOS
 
 
 class TestAspectRatioValidation:
@@ -43,15 +42,13 @@ class TestAspectRatioValidation:
         # The Pydantic validation should accept these values
         assert ratio in SUPPORTED_ASPECT_RATIOS
 
-    @pytest.mark.parametrize("ratio", EXTREME_ASPECT_RATIOS)
-    def test_extreme_aspect_ratios_require_nb2_opt_in(self, ratio):
+    @pytest.mark.parametrize("ratio", ["4:1", "1:4", "8:1", "1:8"])
+    def test_extreme_aspect_ratios_are_rejected_for_polza(self, ratio):
         from nanobanana_mcp_server.core.exceptions import ValidationError
         from nanobanana_mcp_server.utils.validation_utils import validate_aspect_ratio_string
 
         with pytest.raises(ValidationError):
             validate_aspect_ratio_string(ratio)
-
-        validate_aspect_ratio_string(ratio, allow_extreme=True)
 
     def test_aspect_ratio_literal_type_constraint(self):
         """Verify the tool parameter uses Literal type for type safety."""
@@ -102,74 +99,40 @@ class TestGeminiClientAspectRatio:
     def gemini_client(self, mock_config):
         """Create GeminiClient with mocked dependencies."""
         server_config, gemini_config = mock_config
-        client = GeminiClient(server_config, gemini_config)
+        return GeminiClient(server_config, gemini_config)
 
-        # Mock the underlying genai client
-        client._client = Mock()
-        client._client.models = Mock()
-        client._client.models.generate_content = Mock()
-
-        return client
-
-    def test_aspect_ratio_creates_image_config(self, gemini_client):
-        """Test that aspect_ratio parameter creates ImageConfig with aspect_ratio."""
-        with patch("nanobanana_mcp_server.services.gemini_client.gx") as mock_gx:
-            # Setup mocks
-            mock_image_config = Mock()
-            mock_gx.ImageConfig.return_value = mock_image_config
-            mock_gx.GenerateContentConfig = Mock()
-
-            # Call generate_content with aspect_ratio
+    def test_aspect_ratio_is_passed_to_media_payload(self, gemini_client):
+        """aspect_ratio should be forwarded to the Polza payload."""
+        with patch.object(gemini_client, "_request_json") as mock_request, patch.object(
+            gemini_client, "_resolve_media_response", return_value={"data": {"url": "https://example.test/image.png"}}
+        ), patch.object(gemini_client, "_download_bytes", return_value=b"image"):
+            mock_request.return_value = {
+                "id": "gen_1",
+                "status": "completed",
+                "data": {"url": "https://example.test/image.png"},
+            }
             gemini_client.generate_content(contents=["test prompt"], aspect_ratio="16:9")
-
-            # Verify ImageConfig was called with aspect_ratio
-            call_kwargs = mock_gx.ImageConfig.call_args[1]
-            assert call_kwargs.get("aspect_ratio") == "16:9"
-
-    def test_aspect_ratio_none_does_not_create_image_config(self, gemini_client):
-        """Test that aspect_ratio=None does not create ImageConfig when no config needed."""
-        with patch("nanobanana_mcp_server.services.gemini_client.gx") as mock_gx:
-            mock_gx.GenerateContentConfig = Mock()
-            mock_gx.ImageConfig = Mock()
-
-            # Call without aspect_ratio
-            gemini_client.generate_content(contents=["test prompt"])
-
-            # Verify ImageConfig was NOT called (no config to set)
-            mock_gx.ImageConfig.assert_not_called()
+            payload = mock_request.call_args.args[2]
+            assert payload["input"]["aspect_ratio"] == "16:9"
 
     def test_config_conflict_warning(self, gemini_client, caplog):
-        """Test warning when both config dict and aspect_ratio are provided."""
-        import logging
-
-        caplog.set_level(logging.WARNING)
-
-        with patch("nanobanana_mcp_server.services.gemini_client.gx") as mock_gx:
-            mock_gx.ImageConfig = Mock()
-            mock_gx.GenerateContentConfig = Mock()
-
-            # Provide both config dict and aspect_ratio
+        """dict config and aspect_ratio can coexist in the Polza payload."""
+        with patch.object(gemini_client, "_request_json") as mock_request, patch.object(
+            gemini_client, "_resolve_media_response", return_value={"data": {"url": "https://example.test/image.png"}}
+        ), patch.object(gemini_client, "_download_bytes", return_value=b"image"):
+            mock_request.return_value = {
+                "id": "gen_1",
+                "status": "completed",
+                "data": {"url": "https://example.test/image.png"},
+            }
             gemini_client.generate_content(
                 contents=["test"],
                 aspect_ratio="16:9",
-                config={"resolution": "4k"},  # dict config, not GenerateContentConfig
+                config={"resolution": "4k"},
             )
-
-        # Verify no warning was logged (config dict + aspect_ratio is valid)
-        # Warning is only for kwargs['config'] (GenerateContentConfig object)
-        # which would override aspect_ratio handling
-
-    def test_response_modalities_set_for_pro_compatibility(self, gemini_client):
-        """Test that response_modalities is set to ['TEXT', 'IMAGE'] for Pro model compatibility."""
-        with patch("nanobanana_mcp_server.services.gemini_client.gx") as mock_gx:
-            mock_gx.ImageConfig = Mock()
-            mock_gx.GenerateContentConfig = Mock()
-
-            gemini_client.generate_content(contents=["test"], aspect_ratio="16:9")
-
-            # Check that GenerateContentConfig was called with response_modalities
-            call_kwargs = mock_gx.GenerateContentConfig.call_args[1]
-            assert call_kwargs.get("response_modalities") == ["TEXT", "IMAGE"]
+            payload = mock_request.call_args.args[2]
+            assert payload["input"]["aspect_ratio"] == "16:9"
+            assert payload["input"]["image_resolution"] == "4K"
 
 
 class TestAspectRatioMetadata:

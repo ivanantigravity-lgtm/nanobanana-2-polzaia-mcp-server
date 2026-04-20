@@ -1,25 +1,52 @@
 import base64
+from dataclasses import dataclass
+import json
 import logging
+import mimetypes
+import os
+from pathlib import Path
+import time
 from typing import Any
-from urllib.parse import urlsplit
-
-from google import genai
-from google.genai import types as gx
+from urllib.error import HTTPError, URLError
+from urllib.parse import urljoin, urlsplit
+from urllib.request import Request, urlopen
+import uuid
 
 from ..config.settings import (
-    AuthMethod,
     BaseModelConfig,
     FlashImageConfig,
     GeminiConfig,
-    NanoBanana2Config,
     ProImageConfig,
     ServerConfig,
 )
 from ..core.exceptions import AuthenticationError
 
 
+@dataclass
+class UploadedFileObject:
+    """Normalized storage file object."""
+
+    name: str
+    uri: str
+    mime_type: str | None = None
+    size_bytes: int | None = None
+    display_name: str | None = None
+    state: str | None = None
+    create_time: str | None = None
+    update_time: str | None = None
+    expires_at: str | None = None
+
+
+@dataclass
+class GeneratedContentResponse:
+    """Minimal image response compatible with the existing services."""
+
+    generated_images: list[bytes]
+    raw: dict[str, Any]
+
+
 class GeminiClient:
-    """Wrapper for Google Gemini API client with multi-model support."""
+    """Wrapper for Polza media/storage APIs with the legacy GeminiClient interface."""
 
     def __init__(
         self,
@@ -29,42 +56,15 @@ class GeminiClient:
         self.config = config
         self.gemini_config = gemini_config
         self.logger = logging.getLogger(__name__)
-        self._client = None
+        self.base_url = (self.config.gemini_base_url or "https://polza.ai/api").rstrip("/")
 
-    @property
-    def client(self) -> genai.Client:
-        """Lazy initialization of Gemini client."""
-        if self._client is None:
-            # Build http_options for custom base URL if configured
-            http_options = None
-            if self.config.gemini_base_url:
-                http_options = {"base_url": self.config.gemini_base_url}
-                safe_url = self._get_safe_base_url_for_log(self.config.gemini_base_url)
-                self.logger.info(f"Using custom base URL: {safe_url}")
-
-            if self.config.auth_method == AuthMethod.API_KEY:
-                if not self.config.gemini_api_key:
-                    raise AuthenticationError("API key is required for API_KEY auth method")
-                client_kwargs = {"api_key": self.config.gemini_api_key}
-                if http_options:
-                    client_kwargs["http_options"] = http_options
-                self._client = genai.Client(**client_kwargs)
-                self._log_auth_method("API Key (Developer API)")
-            else:  # VERTEX_AI
-                client_kwargs = {
-                    "vertexai": True,
-                    "project": self.config.gcp_project_id,
-                    "location": self.config.gcp_region,
-                }
-                if http_options:
-                    client_kwargs["http_options"] = http_options
-                self._client = genai.Client(**client_kwargs)
-                self._log_auth_method(f"ADC (Vertex AI - {self.config.gcp_region})")
-        return self._client
+        safe_url = self._get_safe_base_url_for_log(self.base_url)
+        self._log_auth_method("API Key (Polza API)")
+        self.logger.info(f"Using API base URL: {safe_url}")
 
     @staticmethod
     def _get_safe_base_url_for_log(raw_url: str) -> str:
-        """Return a sanitized base URL for logs (no credentials/query/fragment/path)."""
+        """Return a sanitized base URL for logs."""
         parsed = urlsplit(raw_url.strip())
         if parsed.scheme and parsed.hostname:
             host = parsed.hostname
@@ -78,20 +78,16 @@ class GeminiClient:
         self.logger.info(f"Authentication method: {method}")
 
     def validate_auth(self) -> bool:
-        """Validate authentication credentials (optional).
-
-        Note: This makes an API call, so use sparingly.
-        """
+        """Validate credentials with a lightweight Polza request."""
         try:
-            # Lightweight API call
-            _ = self.client.models.list()
+            self._request_json("GET", "/v1/balance")
             return True
         except Exception as e:
             self.logger.error(f"Authentication validation failed: {e}")
             return False
 
-    def create_image_parts(self, images_b64: list[str], mime_types: list[str]) -> list[gx.Part]:
-        """Convert base64 images to Gemini Part objects."""
+    def create_image_parts(self, images_b64: list[str], mime_types: list[str]) -> list[dict[str, str]]:
+        """Convert base64 images to normalized Polza image inputs."""
         if not images_b64 or not mime_types:
             return []
 
@@ -112,8 +108,12 @@ class GeminiClient:
                     self.logger.warning(f"Skipping empty image data at index {i}")
                     continue
 
-                part = gx.Part.from_bytes(data=raw_data, mime_type=mime_type)
-                parts.append(part)
+                normalized_b64 = b64
+                if not normalized_b64.startswith("data:"):
+                    normalized_b64 = (
+                        f"data:{mime_type};base64,{base64.b64encode(raw_data).decode('utf-8')}"
+                    )
+                parts.append({"type": "base64", "mime_type": mime_type, "data": normalized_b64})
             except Exception as e:
                 self.logger.error(f"Failed to process image at index {i}: {e}")
                 raise ValueError(f"Invalid image data at index {i}: {e}") from e
@@ -125,174 +125,338 @@ class GeminiClient:
         config: dict[str, Any] | None = None,
         aspect_ratio: str | None = None,
         **kwargs,
-    ) -> any:
-        """
-        Generate content using Gemini API with model-aware parameter handling.
-
-        Args:
-            contents: Content list (text, images, etc.)
-            config: Generation configuration dict (model-specific parameters)
-            aspect_ratio: Optional aspect ratio string (e.g., "16:9")
-            **kwargs: Additional parameters
-
-        Returns:
-            API response object
-        """
+    ) -> GeneratedContentResponse:
+        """Generate content through Polza and return normalized image bytes."""
         try:
-            # Remove unsupported request_options parameter
             kwargs.pop("request_options", None)
+            filtered_config = self._filter_parameters(config or {})
+            prompt, images = self._normalize_contents(contents)
 
-            # Check for config conflict
-            config_obj = kwargs.pop("config", None)
-            if config_obj is not None:
-                if aspect_ratio or config:
-                    self.logger.warning(
-                        "Custom 'config' kwarg provided; ignoring aspect_ratio and config parameters"
-                    )
-                kwargs["config"] = config_obj
-            else:
-                # Filter parameters based on model capabilities
-                filtered_config = self._filter_parameters(config or {})
-
-                # Build generation config - use TEXT,IMAGE for Pro model compatibility
-                config_kwargs = {
-                    "response_modalities": ["TEXT", "IMAGE"],
-                }
-
-                # Build ImageConfig with aspect_ratio and image_size
-                image_config_kwargs = {}
-                if aspect_ratio:
-                    image_config_kwargs["aspect_ratio"] = aspect_ratio
-
-                # Map resolution to image_size for Pro model
-                resolution = config.get("resolution") if config else None
-                if resolution:
-                    # Map resolution names to API image_size values
-                    resolution_map = {
-                        "4k": "4K",
-                        "2k": "2K",
-                        "1k": "1K",
-                        "high": "1K",  # Default high to 1K
-                    }
-                    image_size = resolution_map.get(resolution.lower(), "1K")
-                    image_config_kwargs["image_size"] = image_size
-                    self.logger.info(f"Setting image_size={image_size} for resolution={resolution}")
-
-                if image_config_kwargs:
-                    config_kwargs["image_config"] = gx.ImageConfig(**image_config_kwargs)
-
-                # Merge filtered config parameters (excluding image_config related ones)
-                config_kwargs.update(filtered_config)
-
-                kwargs["config"] = gx.GenerateContentConfig(**config_kwargs)
-
-            # Prepare kwargs
-            api_kwargs = {
+            payload: dict[str, Any] = {
                 "model": self.gemini_config.model_name,
-                "contents": contents,
+                "input": {
+                    "prompt": prompt,
+                    "output_format": getattr(self.gemini_config, "default_image_format", "png"),
+                },
+                "async": False,
             }
 
-            # Merge additional kwargs
-            api_kwargs.update(kwargs)
+            if images:
+                payload["input"]["images"] = images
+            if aspect_ratio:
+                payload["input"]["aspect_ratio"] = aspect_ratio
 
-            self.logger.debug(
-                f"Calling Gemini API: model={self.gemini_config.model_name}, "
-                f"config={api_kwargs.get('config')}"
-            )
+            image_resolution = self._map_resolution_to_polza(filtered_config.get("resolution"))
+            if image_resolution:
+                payload["input"]["image_resolution"] = image_resolution
 
-            response = self.client.models.generate_content(**api_kwargs)
-            return response
+            if self.config.polza_external_user_id:
+                payload["user"] = self.config.polza_external_user_id
+
+            response = self._request_json("POST", "/v1/media", payload)
+            if not isinstance(response, dict):
+                raise RuntimeError(f"Unexpected media response type: {type(response).__name__}")
+
+            final_response = self._resolve_media_response(response)
+            image_urls = self._extract_output_urls(final_response)
+            generated_images = [self._download_bytes(url) for url in image_urls]
+
+            return GeneratedContentResponse(generated_images=generated_images, raw=final_response)
 
         except Exception as e:
-            self.logger.error(f"Gemini API error: {e}")
+            self.logger.error(f"Polza API error: {e}")
             raise
 
     def _filter_parameters(self, config: dict[str, Any]) -> dict[str, Any]:
-        """
-        Filter configuration parameters based on model capabilities.
-
-        Ensures we only send parameters that the current model supports,
-        preventing API errors from unsupported parameters.
-
-        Args:
-            config: Raw configuration dictionary
-
-        Returns:
-            Filtered configuration with only supported parameters
-        """
+        """Keep only parameters still relevant after the Polza migration."""
         if not config:
             return {}
 
         filtered = {}
-
-        # Common parameters (supported by all models)
-        for param in ["temperature", "top_p", "top_k", "max_output_tokens"]:
+        for param in ["temperature", "top_p", "top_k", "max_output_tokens", "resolution"]:
             if param in config:
                 filtered[param] = config[param]
-
-        # NB2-specific parameters
-        if isinstance(self.gemini_config, NanoBanana2Config):
-            if "thinking_level" in config:
-                filtered["thinking_config"] = gx.ThinkingConfig(
-                    thinking_level=gx.ThinkingLevel[config["thinking_level"].upper()]
-                )
-
-        # Pro-specific parameters - thinking_level is NOT supported by gemini-3-pro-image-preview
-        elif isinstance(self.gemini_config, ProImageConfig):
-            # Resolution is handled via ImageConfig.image_size, not here
-            # Grounding is controlled via prompt/system instructions
-            if "thinking_level" in config:
-                self.logger.info(
-                    "Note: thinking_level is not supported by gemini-3-pro-image-preview, ignoring"
-                )
-
-        else:
-            # Flash model - warn if Pro parameters are used
-            pro_params = ["thinking_level", "media_resolution", "output_resolution"]
-            used_pro_params = [p for p in pro_params if p in config]
-            if used_pro_params:
-                self.logger.warning(
-                    f"Pro-only parameters ignored for Flash model: {used_pro_params}"
-                )
-
         return filtered
 
-    def extract_images(self, response) -> list[bytes]:
-        """Extract image bytes from Gemini response."""
-        images = []
-        candidates = getattr(response, "candidates", None)
-        if not candidates or len(candidates) == 0:
-            return images
+    def extract_images(self, response: GeneratedContentResponse) -> list[bytes]:
+        """Extract image bytes from the normalized response object."""
+        return list(getattr(response, "generated_images", []))
 
-        first_candidate = candidates[0]
-        if not hasattr(first_candidate, "content") or not first_candidate.content:
-            return images
+    def upload_file(self, file_path: str, _display_name: str | None = None) -> UploadedFileObject:
+        """Upload file to Polza Storage API."""
+        mime_type = mimetypes.guess_type(file_path)[0] or "application/octet-stream"
+        response = self._request_multipart_upload(
+            "/v1/storage/upload",
+            file_path=file_path,
+            fields={"storagePolicy": "TEMP_UPLOAD"},
+        )
+        return self._to_uploaded_file(
+            response,
+            fallback_name=os.path.basename(file_path),
+            mime_type=mime_type,
+        )
 
-        content_parts = getattr(first_candidate.content, "parts", [])
-        for part in content_parts:
-            inline_data = getattr(part, "inline_data", None)
-            if inline_data and hasattr(inline_data, "data") and inline_data.data:
-                images.append(inline_data.data)
+    def get_file_metadata(self, file_name: str) -> UploadedFileObject:
+        """Get file metadata from Polza Storage API."""
+        normalized_id = self._normalize_file_id(file_name)
+        response = self._request_json("GET", f"/v1/storage/files/{normalized_id}")
+        if not isinstance(response, dict):
+            raise RuntimeError(f"Unexpected storage response type: {type(response).__name__}")
+        return self._to_uploaded_file(response)
 
-        return images
+    def list_files(self) -> list[UploadedFileObject]:
+        """List files from Polza Storage API."""
+        response = self._request_json("GET", "/v1/storage/files?limit=100")
+        if not isinstance(response, list):
+            return []
+        return [self._to_uploaded_file(item) for item in response if isinstance(item, dict)]
 
-    def upload_file(self, file_path: str, _display_name: str | None = None):
-        """Upload file to Gemini Files API.
+    def delete_file(self, file_name: str) -> dict[str, Any]:
+        """Delete file from Polza Storage API."""
+        normalized_id = self._normalize_file_id(file_name)
+        response = self._request_json("DELETE", f"/v1/storage/files/{normalized_id}")
+        if isinstance(response, dict):
+            return response
+        return {"success": True}
 
-        Note: display_name is kept for API compatibility but ignored as the
-        Gemini Files API does not support display_name parameter in upload.
-        """
+    def _normalize_contents(self, contents: list[Any]) -> tuple[str, list[dict[str, str]]]:
+        text_parts: list[str] = []
+        images: list[dict[str, str]] = []
+
+        for item in contents:
+            if isinstance(item, str):
+                stripped = item.strip()
+                if stripped:
+                    text_parts.append(stripped)
+                continue
+
+            if not isinstance(item, dict):
+                continue
+
+            if "file_data" in item:
+                file_data = item["file_data"] or {}
+                uri = file_data.get("uri")
+                if uri:
+                    images.append({"type": "url", "data": uri})
+                continue
+
+            item_type = item.get("type")
+            data = item.get("data")
+            if item_type in {"url", "base64"} and data:
+                images.append({"type": item_type, "data": data})
+
+        prompt = "\n\n".join(text_parts).strip()
+        if not prompt:
+            raise ValueError("Prompt cannot be empty")
+        return prompt, images
+
+    def _map_resolution_to_polza(self, resolution: str | None) -> str | None:
+        if not resolution:
+            return None
+
+        resolution_map = {
+            "4k": "4K",
+            "2k": "2K",
+            "1k": "1K",
+        }
+        normalized = resolution.strip().lower()
+        if normalized in resolution_map:
+            return resolution_map[normalized]
+        if normalized == "high":
+            if isinstance(self.gemini_config, FlashImageConfig):
+                return "1K"
+            return "2K"
+        return None
+
+    def _request_json(
+        self, method: str, path: str, payload: dict[str, Any] | None = None
+    ) -> dict[str, Any] | list[Any]:
+        if not self.config.gemini_api_key:
+            raise AuthenticationError("POLZA_AI_API_KEY is required")
+
+        url = self._build_url(path)
+        headers = {"Authorization": f"Bearer {self.config.gemini_api_key}"}
+        data = None
+        if payload is not None:
+            data = json.dumps(payload).encode("utf-8")
+            headers["Content-Type"] = "application/json"
+
+        request = Request(url=url, data=data, headers=headers, method=method)
+
         try:
-            # Gemini Files API only accepts file parameter
-            return self.client.files.upload(file=file_path)
-        except Exception as e:
-            self.logger.error(f"File upload error: {e}")
-            raise
+            with urlopen(request, timeout=self.gemini_config.request_timeout) as response:
+                body = response.read()
+        except HTTPError as exc:
+            details = exc.read().decode("utf-8", errors="replace")
+            raise RuntimeError(f"HTTP {exc.code} for {url}: {details}") from exc
+        except URLError as exc:
+            raise RuntimeError(f"Network error for {url}: {exc}") from exc
 
-    def get_file_metadata(self, file_name: str):
-        """Get file metadata from Gemini Files API."""
+        if not body:
+            return {}
+        return json.loads(body.decode("utf-8"))
+
+    def _request_multipart_upload(
+        self, path: str, *, file_path: str, fields: dict[str, str] | None = None
+    ) -> dict[str, Any]:
+        if not self.config.gemini_api_key:
+            raise AuthenticationError("POLZA_AI_API_KEY is required")
+
+        fields = fields or {}
+        boundary = f"----nanobanana-{uuid.uuid4().hex}"
+        file_name = Path(file_path).name
+        mime_type = mimetypes.guess_type(file_path)[0] or "application/octet-stream"
+        file_bytes = Path(file_path).read_bytes()
+        parts: list[bytes] = []
+
+        for key, value in fields.items():
+            parts.extend(
+                [
+                    f"--{boundary}\r\n".encode("utf-8"),
+                    f'Content-Disposition: form-data; name="{key}"\r\n\r\n'.encode("utf-8"),
+                    f"{value}\r\n".encode("utf-8"),
+                ]
+            )
+
+        parts.extend(
+            [
+                f"--{boundary}\r\n".encode("utf-8"),
+                (
+                    f'Content-Disposition: form-data; name="file"; filename="{file_name}"\r\n'
+                ).encode("utf-8"),
+                f"Content-Type: {mime_type}\r\n\r\n".encode("utf-8"),
+                file_bytes,
+                b"\r\n",
+                f"--{boundary}--\r\n".encode("utf-8"),
+            ]
+        )
+
+        request = Request(
+            url=self._build_url(path),
+            data=b"".join(parts),
+            headers={
+                "Authorization": f"Bearer {self.config.gemini_api_key}",
+                "Content-Type": f"multipart/form-data; boundary={boundary}",
+            },
+            method="POST",
+        )
+
         try:
-            return self.client.files.get(name=file_name)
-        except Exception as e:
-            self.logger.error(f"File metadata error: {e}")
-            raise
+            with urlopen(request, timeout=self.gemini_config.request_timeout) as response:
+                return json.loads(response.read().decode("utf-8"))
+        except HTTPError as exc:
+            details = exc.read().decode("utf-8", errors="replace")
+            raise RuntimeError(f"HTTP {exc.code} for upload: {details}") from exc
+        except URLError as exc:
+            raise RuntimeError(f"Network error during upload: {exc}") from exc
+
+    def _resolve_media_response(self, response: dict[str, Any]) -> dict[str, Any]:
+        status = (response.get("status") or "").lower()
+        if status == "completed":
+            return response
+        if status == "failed":
+            error = response.get("error") or {}
+            raise RuntimeError(error.get("message") or "Media generation failed")
+
+        media_id = response.get("id")
+        if not media_id:
+            return response
+        return self._poll_media_status(media_id)
+
+    def _poll_media_status(self, media_id: str) -> dict[str, Any]:
+        deadline = time.time() + self.config.polza_poll_timeout_seconds
+        last_response: dict[str, Any] | None = None
+
+        while time.time() < deadline:
+            response = self._request_json("GET", f"/v1/media/{media_id}")
+            if not isinstance(response, dict):
+                raise RuntimeError(f"Unexpected polling response for media {media_id}")
+
+            last_response = response
+            status = (response.get("status") or "").lower()
+            if status == "completed":
+                return response
+            if status == "failed":
+                error = response.get("error") or {}
+                raise RuntimeError(
+                    error.get("message") or f"Media generation failed for {media_id}"
+                )
+
+            time.sleep(self.config.polza_poll_interval_seconds)
+
+        raise TimeoutError(f"Timed out waiting for media generation {media_id}: {last_response}")
+
+    def _extract_output_urls(self, response: dict[str, Any]) -> list[str]:
+        data = response.get("data")
+        urls: list[str] = []
+
+        if isinstance(data, dict):
+            if isinstance(data.get("url"), str):
+                urls.append(data["url"])
+
+            for key in ("urls", "files"):
+                value = data.get(key)
+                if isinstance(value, list):
+                    urls.extend([item for item in value if isinstance(item, str)])
+
+            for key in ("images", "results", "items"):
+                value = data.get(key)
+                if isinstance(value, list):
+                    for item in value:
+                        if isinstance(item, dict) and isinstance(item.get("url"), str):
+                            urls.append(item["url"])
+
+        elif isinstance(data, list):
+            for item in data:
+                if isinstance(item, dict) and isinstance(item.get("url"), str):
+                    urls.append(item["url"])
+                elif isinstance(item, str):
+                    urls.append(item)
+
+        if not urls:
+            raise RuntimeError(f"No output URLs found in response: {response}")
+        return urls
+
+    def _download_bytes(self, url: str) -> bytes:
+        request = Request(url=url, method="GET")
+        try:
+            with urlopen(request, timeout=self.gemini_config.request_timeout) as response:
+                return response.read()
+        except HTTPError as exc:
+            details = exc.read().decode("utf-8", errors="replace")
+            raise RuntimeError(
+                f"Failed to download generated file {url}: HTTP {exc.code} {details}"
+            ) from exc
+        except URLError as exc:
+            raise RuntimeError(f"Failed to download generated file {url}: {exc}") from exc
+
+    def _build_url(self, path: str) -> str:
+        if path.startswith("http://") or path.startswith("https://"):
+            return path
+        return urljoin(self.base_url + "/", path.lstrip("/"))
+
+    def _normalize_file_id(self, file_name: str) -> str:
+        return file_name.split("/", 1)[1] if file_name.startswith("files/") else file_name
+
+    def _to_uploaded_file(
+        self,
+        payload: dict[str, Any],
+        *,
+        fallback_name: str | None = None,
+        mime_type: str | None = None,
+    ) -> UploadedFileObject:
+        file_id = payload.get("id") or fallback_name or ""
+        if not file_id:
+            raise RuntimeError(f"Unexpected storage payload: {payload}")
+
+        return UploadedFileObject(
+            name=file_id,
+            uri=payload.get("url") or "",
+            mime_type=payload.get("mimeType") or mime_type,
+            size_bytes=payload.get("size"),
+            display_name=fallback_name,
+            state="ACTIVE",
+            create_time=payload.get("createdAt"),
+            update_time=payload.get("updatedAt"),
+            expires_at=payload.get("expiresAt"),
+        )

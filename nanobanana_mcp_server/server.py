@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
-"""
-Nano Banana MCP Server - Main Entry Point
-
-A production-ready FastMCP server that provides AI-powered image generation and editing
-capabilities through Google's Gemini 2.5 Flash Image model.
-"""
+"""Nano Banana 2 Polza AI MCP Server - Main Entry Point."""
 
 import sys
 import os
@@ -30,7 +25,7 @@ def create_app():
         setup_logging(level=log_level, format_type=log_format)
 
     logger = logging.getLogger(__name__)
-    logger.info("Initializing Nano Banana MCP Server...")
+    logger.info("Initializing Nano Banana 2 Polza AI MCP Server...")
 
     try:
         # Load configuration
@@ -38,7 +33,7 @@ def create_app():
         gemini_config = GeminiConfig()
 
         logger.info(f"Server transport: {server_config.transport}")
-        logger.info(f"Gemini model: {gemini_config.model_name}")
+        logger.info(f"Default model: {gemini_config.model_name}")
 
         # Initialize services first
         services.initialize_services(server_config, gemini_config)
@@ -71,7 +66,7 @@ def create_wrapper_app() -> NanoBananaMCP:
         setup_logging(level=log_level, format_type=log_format)
 
     logger = logging.getLogger(__name__)
-    logger.info("Initializing Nano Banana MCP Server...")
+    logger.info("Initializing Nano Banana 2 Polza AI MCP Server...")
 
     try:
         # Load configuration
@@ -79,7 +74,7 @@ def create_wrapper_app() -> NanoBananaMCP:
         gemini_config = GeminiConfig()
 
         logger.info(f"Server transport: {server_config.transport}")
-        logger.info(f"Gemini model: {gemini_config.model_name}")
+        logger.info(f"Default model: {gemini_config.model_name}")
 
         # Initialize services first
         services.initialize_services(server_config, gemini_config)
@@ -111,7 +106,7 @@ def main():
     logger = logging.getLogger(__name__)
 
     try:
-        logger.info("Starting Nano Banana MCP Server...")
+        logger.info("Starting Nano Banana 2 Polza AI MCP Server...")
         logger.info(f"Python version: {sys.version}")
         logger.info(f"Working directory: {os.getcwd()}")
 

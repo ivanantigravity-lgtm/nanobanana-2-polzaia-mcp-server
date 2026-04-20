@@ -8,10 +8,10 @@ import logging
 def register_file_metadata_resource(server: FastMCP):
     """Register the file metadata resource with the FastMCP server."""
 
-    @server.resource("gemini://files/{name}")
+    @server.resource("polza://files/{name}")
     def file_metadata(name: str) -> Dict[str, Any]:
         """
-        Fetch Files API metadata by file 'name' (like 'files/abc123').
+        Fetch storage metadata by file id.
         """
         logger = logging.getLogger(__name__)
 

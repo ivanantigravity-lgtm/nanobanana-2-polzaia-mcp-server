@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "nanobanana-polza": {
+      "command": "uvx",
+      "args": ["nanobanana-2-polzaia-mcp-server@latest"],
+      "env": {
+        "POLZA_AI_API_KEY": "your-polza-api-key-here",
+        "POLZA_BASE_URL": "https://polza.ai/api",
+        "IMAGE_OUTPUT_DIR": "/Users/demo/Documents/nanobanana"
+      }
+    }
+  }
+}

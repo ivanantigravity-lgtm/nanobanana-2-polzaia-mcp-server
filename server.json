@@ -1,18 +1,18 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json",
-  "name": "io.github.zhongweili/nanobanana-mcp-server",
-  "description": "AI image generation with Gemini 3 Pro (4K) and 2.5 Flash. Smart model selection.",
+  "name": "io.github.ivanantigravity-lgtm/nanobanana-2-polzaia-mcp-server",
+  "description": "Nano Banana MCP server backed by Polza AI media and storage APIs.",
   "repository": {
-    "url": "https://github.com/zhongweili/nanobanana-mcp-server",
+    "url": "https://github.com/ivanantigravity-lgtm/nanobanana-2-polzaia-mcp-server",
     "source": "github"
   },
-  "version": "0.2.0",
+  "version": "0.4.4",
   "packages": [
     {
       "registryType": "pypi",
       "registryBaseUrl": "https://pypi.org",
-      "identifier": "nanobanana-mcp-server",
-      "version": "0.2.0",
+      "identifier": "nanobanana-2-polzaia-mcp-server",
+      "version": "0.4.4",
       "transport": {
         "type": "stdio"
       }

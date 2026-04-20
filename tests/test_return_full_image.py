@@ -26,7 +26,7 @@ class TestServerConfigReturnFullImage:
     def test_default_is_false(self):
         """return_full_image defaults to false when env var is not set."""
         with patch("nanobanana_mcp_server.config.settings.load_dotenv"), patch.dict(
-            os.environ, {"GEMINI_API_KEY": "test-key"}, clear=True
+            os.environ, {"POLZA_AI_API_KEY": "test-key"}, clear=True
         ):
             config = ServerConfig.from_env()
             assert config.return_full_image is False
@@ -35,7 +35,7 @@ class TestServerConfigReturnFullImage:
         """return_full_image is true when RETURN_FULL_IMAGE=true."""
         with patch("nanobanana_mcp_server.config.settings.load_dotenv"), patch.dict(
             os.environ,
-            {"GEMINI_API_KEY": "test-key", "RETURN_FULL_IMAGE": "true"},
+            {"POLZA_AI_API_KEY": "test-key", "RETURN_FULL_IMAGE": "true"},
             clear=True,
         ):
             config = ServerConfig.from_env()
@@ -45,7 +45,7 @@ class TestServerConfigReturnFullImage:
         """return_full_image is false when RETURN_FULL_IMAGE=false."""
         with patch("nanobanana_mcp_server.config.settings.load_dotenv"), patch.dict(
             os.environ,
-            {"GEMINI_API_KEY": "test-key", "RETURN_FULL_IMAGE": "false"},
+            {"POLZA_AI_API_KEY": "test-key", "RETURN_FULL_IMAGE": "false"},
             clear=True,
         ):
             config = ServerConfig.from_env()
@@ -55,7 +55,7 @@ class TestServerConfigReturnFullImage:
         """return_full_image is true when RETURN_FULL_IMAGE=1."""
         with patch("nanobanana_mcp_server.config.settings.load_dotenv"), patch.dict(
             os.environ,
-            {"GEMINI_API_KEY": "test-key", "RETURN_FULL_IMAGE": "1"},
+            {"POLZA_AI_API_KEY": "test-key", "RETURN_FULL_IMAGE": "1"},
             clear=True,
         ):
             config = ServerConfig.from_env()
@@ -65,7 +65,7 @@ class TestServerConfigReturnFullImage:
         """return_full_image is true when RETURN_FULL_IMAGE=yes."""
         with patch("nanobanana_mcp_server.config.settings.load_dotenv"), patch.dict(
             os.environ,
-            {"GEMINI_API_KEY": "test-key", "RETURN_FULL_IMAGE": "yes"},
+            {"POLZA_AI_API_KEY": "test-key", "RETURN_FULL_IMAGE": "yes"},
             clear=True,
         ):
             config = ServerConfig.from_env()
@@ -75,7 +75,7 @@ class TestServerConfigReturnFullImage:
         """return_full_image is false for unrecognized values."""
         with patch("nanobanana_mcp_server.config.settings.load_dotenv"), patch.dict(
             os.environ,
-            {"GEMINI_API_KEY": "test-key", "RETURN_FULL_IMAGE": "maybe"},
+            {"POLZA_AI_API_KEY": "test-key", "RETURN_FULL_IMAGE": "maybe"},
             clear=True,
         ):
             config = ServerConfig.from_env()
@@ -85,7 +85,7 @@ class TestServerConfigReturnFullImage:
         """return_full_image parsing is case-insensitive."""
         with patch("nanobanana_mcp_server.config.settings.load_dotenv"), patch.dict(
             os.environ,
-            {"GEMINI_API_KEY": "test-key", "RETURN_FULL_IMAGE": "TRUE"},
+            {"POLZA_AI_API_KEY": "test-key", "RETURN_FULL_IMAGE": "TRUE"},
             clear=True,
         ):
             config = ServerConfig.from_env()
@@ -95,7 +95,7 @@ class TestServerConfigReturnFullImage:
         """return_full_image handles whitespace in env var value."""
         with patch("nanobanana_mcp_server.config.settings.load_dotenv"), patch.dict(
             os.environ,
-            {"GEMINI_API_KEY": "test-key", "RETURN_FULL_IMAGE": " true "},
+            {"POLZA_AI_API_KEY": "test-key", "RETURN_FULL_IMAGE": " true "},
             clear=True,
         ):
             config = ServerConfig.from_env()

@@ -104,13 +104,11 @@ def register_generate_image_tool(server: FastMCP):
         ] = True,
         aspect_ratio: Annotated[
             Literal[
-                "1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9",
-                "4:1", "1:4", "8:1", "1:8",
+                "auto", "1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9",
             ] | None,
             Field(
                 description="Optional output aspect ratio (e.g., '16:9'). "
-                "Standard: 1:1, 2:3, 3:2, 3:4, 4:3, 4:5, 5:4, 9:16, 16:9, 21:9. "
-                "Extreme (nb2 only): 4:1, 1:4, 8:1, 1:8."
+                "Polza-supported values: auto, 1:1, 2:3, 3:2, 3:4, 4:3, 4:5, 5:4, 9:16, 16:9, 21:9."
             ),
         ] = None,
         output_path: Annotated[
@@ -491,8 +489,6 @@ def register_generate_image_tool(server: FastMCP):
                     summary_lines.append(f"📏 **Resolution**: {resolution}")
                     if enable_grounding:
                         summary_lines.append("🔍 **Grounding**: Enabled (Google Search)")
-                    if aspect_ratio in ("4:1", "1:4", "8:1", "1:8"):
-                        summary_lines.append(f"📐 **Extreme Aspect Ratio**: {aspect_ratio}")
                 summary_lines.append("")  # Blank line
 
                 # Add source information based on mode and inputs

@@ -27,25 +27,20 @@ TEMPLATE_CATEGORIES = {
 
 # Error messages
 ERROR_MESSAGES = {
-    "missing_api_key": "GEMINI_API_KEY or GOOGLE_API_KEY must be set in environment",
+    "missing_api_key": "POLZA_AI_API_KEY must be set in environment",
     "invalid_image_format": "Unsupported image format. Supported types: {types}",
     "image_too_large": "Image size ({size}) exceeds maximum limit ({limit})",
     "validation_error": "Parameter validation failed: {details}",
-    "api_error": "Gemini API error: {details}",
+    "api_error": "Polza API error: {details}",
     "unknown_error": "An unexpected error occurred: {details}",
 }
 
 # Authentication error messages
 AUTH_ERROR_MESSAGES = {
-    "vertex_ai_project_required": (
-        "Vertex AI authentication requires GCP_PROJECT_ID or GOOGLE_CLOUD_PROJECT to be set."
-    ),
-    "api_key_required": (
-        "API Key authentication requires GEMINI_API_KEY or GOOGLE_API_KEY to be set."
-    ),
+    "vertex_ai_project_required": "Vertex AI authentication is not supported in the Polza adapter.",
+    "api_key_required": "API Key authentication requires POLZA_AI_API_KEY to be set.",
     "no_auth_configured": (
         "No valid authentication configuration found.\n"
-        "API Key: Set GEMINI_API_KEY or GOOGLE_API_KEY\n"
-        "Vertex AI: Set GCP_PROJECT_ID (and optionally GCP_REGION)"
+        "API Key: Set POLZA_AI_API_KEY"
     ),
 }

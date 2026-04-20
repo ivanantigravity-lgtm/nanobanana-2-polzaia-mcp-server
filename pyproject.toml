@@ -1,14 +1,14 @@
 [project]
-name = "nanobanana-mcp-server"
+name = "nanobanana-2-polzaia-mcp-server"
 version = "0.4.4"
-description = "A production-ready MCP server for AI-powered image generation using Gemini 3.1 Flash Image (Nano Banana 2, default), Gemini 3 Pro Image, and Gemini 2.5 Flash Image with intelligent model selection"
+description = "An MCP server for Nano Banana image generation through the Polza AI media API"
 authors = [
     { name = "zhongwei", email = "lizhongwei.nkcs@gmail.com" }
 ]
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"
-keywords = ["mcp", "ai", "image-generation", "gemini", "fastmcp", "4k", "nano-banana-pro", "grounding"]
+keywords = ["mcp", "polza", "polza-ai", "image-generation", "nano-banana", "fastmcp", "4k"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -23,7 +23,6 @@ classifiers = [
 
 dependencies = [
     "fastmcp>=2.11.0",
-    "google-genai>=1.57.0",
     "pillow>=10.4.0",
     "python-dotenv>=1.0.1",
     "pydantic>=2.0.0",
@@ -57,17 +56,17 @@ docs = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/nano-banana/mcp-server"
-Repository = "https://github.com/nano-banana/mcp-server.git"
-Documentation = "https://docs.nanobanana.dev"
-"Bug Tracker" = "https://github.com/nano-banana/mcp-server/issues"
+Homepage = "https://github.com/ivanantigravity-lgtm/nanobanana-2-polzaia-mcp-server"
+Repository = "https://github.com/ivanantigravity-lgtm/nanobanana-2-polzaia-mcp-server.git"
+Documentation = "https://github.com/ivanantigravity-lgtm/nanobanana-2-polzaia-mcp-server#readme"
+"Bug Tracker" = "https://github.com/ivanantigravity-lgtm/nanobanana-2-polzaia-mcp-server/issues"
 
 [project.scripts]
-nanobanana-mcp-server = "nanobanana_mcp_server.server:main"
-nanobanana-mcp = "nanobanana_mcp_server.server:main"
+nanobanana-2-polzaia-mcp-server = "nanobanana_mcp_server.server:main"
+nanobanana-polza-mcp = "nanobanana_mcp_server.server:main"
 
 [project.entry-points.fastmcp]
-nanobanana-mcp-server = "nanobanana_mcp_server.server:create_app"
+nanobanana-2-polzaia-mcp-server = "nanobanana_mcp_server.server:create_app"
 
 [build-system]
 requires = ["hatchling"]
@@ -196,7 +195,6 @@ show_error_codes = true
 
 [[tool.mypy.overrides]]
 module = [
-    "google.*",
     "fastmcp.*",
     "PIL.*",
 ]
