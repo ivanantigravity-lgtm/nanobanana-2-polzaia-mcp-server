@@ -4,7 +4,7 @@ This project has no traditional database. Data persistence is handled via three 
 
 ## 1. Local File Storage (`ImageStorageService`)
 
-File: `nanobanana_mcp_server/services/image_storage_service.py`
+File: `nanobanana_2_polzaia_mcp_server/services/image_storage_service.py`
 
 - **Default location:** `~/nanobanana-images` (overridden by `IMAGE_OUTPUT_DIR` env var)
 - **Structure:** Full-resolution images + auto-generated thumbnails
@@ -21,7 +21,7 @@ File: `nanobanana_mcp_server/services/image_storage_service.py`
 
 ## 2. Image Metadata Database (`ImageDatabaseService`)
 
-File: `nanobanana_mcp_server/services/image_database_service.py`
+File: `nanobanana_2_polzaia_mcp_server/services/image_database_service.py`
 
 - Local SQLite-based metadata persistence for generated images
 - Stores: generation parameters, model tier, storage IDs, timestamps
@@ -29,7 +29,7 @@ File: `nanobanana_mcp_server/services/image_database_service.py`
 
 ## 3. Gemini Files API (`FilesAPIService`)
 
-File: `nanobanana_mcp_server/services/files_api_service.py`
+File: `nanobanana_2_polzaia_mcp_server/services/files_api_service.py`
 
 - Remote file storage via Google's Files API (~20GB budget)
 - Files uploaded via `upload_file` tool get a `file_id` (e.g. `files/abc123`)

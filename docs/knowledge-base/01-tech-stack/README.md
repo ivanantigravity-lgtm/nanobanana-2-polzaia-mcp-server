@@ -4,7 +4,7 @@
 
 - **Language:** Python >=3.11
 - **Package manager:** `uv` (recommended) — lock file at `uv.lock`
-- **Entry points:** `fastmcp dev nanobanana_mcp_server.server:create_app` or `python -m nanobanana_mcp_server.server`
+- **Entry points:** `fastmcp dev nanobanana_2_polzaia_mcp_server.server:create_app` or `python -m nanobanana_2_polzaia_mcp_server.server`
 
 ## Core Framework
 

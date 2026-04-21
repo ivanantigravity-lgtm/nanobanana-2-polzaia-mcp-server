@@ -84,7 +84,7 @@ class _FakeFilesAPIService:
 
 
 def _get_generate_image_fn():
-    from nanobanana_mcp_server.tools.generate_image import register_generate_image_tool
+    from nanobanana_2_polzaia_mcp_server.tools.generate_image import register_generate_image_tool
 
     server = FastMCP("test")
     register_generate_image_tool(server)
@@ -94,7 +94,7 @@ def _get_generate_image_fn():
 
 @pytest.mark.unit
 def test_edit_mode_pro_routes_to_selected_service_for_path(monkeypatch, tmp_path):
-    from nanobanana_mcp_server.config.settings import ModelTier
+    from nanobanana_2_polzaia_mcp_server.config.settings import ModelTier
 
     gen_fn = _get_generate_image_fn()
 
@@ -111,9 +111,9 @@ def test_edit_mode_pro_routes_to_selected_service_for_path(monkeypatch, tmp_path
         name="Gemini 3 Pro Image",
     )
 
-    monkeypatch.setattr("nanobanana_mcp_server.services.get_model_selector", lambda: model_selector)
+    monkeypatch.setattr("nanobanana_2_polzaia_mcp_server.services.get_model_selector", lambda: model_selector)
     monkeypatch.setattr(
-        "nanobanana_mcp_server.tools.generate_image._get_enhanced_image_service",
+        "nanobanana_2_polzaia_mcp_server.tools.generate_image._get_enhanced_image_service",
         lambda: enhanced,
     )
 
@@ -136,7 +136,7 @@ def test_edit_mode_pro_routes_to_selected_service_for_path(monkeypatch, tmp_path
 
 @pytest.mark.unit
 def test_edit_mode_nb2_routes_to_selected_service_for_file_id(monkeypatch, tmp_path):
-    from nanobanana_mcp_server.config.settings import ModelTier
+    from nanobanana_2_polzaia_mcp_server.config.settings import ModelTier
 
     gen_fn = _get_generate_image_fn()
 
@@ -150,10 +150,10 @@ def test_edit_mode_nb2_routes_to_selected_service_for_file_id(monkeypatch, tmp_p
     )
     files_api = _FakeFilesAPIService()
 
-    monkeypatch.setattr("nanobanana_mcp_server.services.get_model_selector", lambda: model_selector)
-    monkeypatch.setattr("nanobanana_mcp_server.services.get_files_api_service", lambda: files_api)
+    monkeypatch.setattr("nanobanana_2_polzaia_mcp_server.services.get_model_selector", lambda: model_selector)
+    monkeypatch.setattr("nanobanana_2_polzaia_mcp_server.services.get_files_api_service", lambda: files_api)
     monkeypatch.setattr(
-        "nanobanana_mcp_server.tools.generate_image._get_enhanced_image_service",
+        "nanobanana_2_polzaia_mcp_server.tools.generate_image._get_enhanced_image_service",
         lambda: enhanced,
     )
 
@@ -183,7 +183,7 @@ def test_edit_mode_nb2_routes_to_selected_service_for_file_id(monkeypatch, tmp_p
 
 @pytest.mark.unit
 def test_edit_mode_flash_routes_to_enhanced_service(monkeypatch, tmp_path):
-    from nanobanana_mcp_server.config.settings import ModelTier
+    from nanobanana_2_polzaia_mcp_server.config.settings import ModelTier
 
     gen_fn = _get_generate_image_fn()
 
@@ -199,9 +199,9 @@ def test_edit_mode_flash_routes_to_enhanced_service(monkeypatch, tmp_path):
         name="Gemini 2.5 Flash Image",
     )
 
-    monkeypatch.setattr("nanobanana_mcp_server.services.get_model_selector", lambda: model_selector)
+    monkeypatch.setattr("nanobanana_2_polzaia_mcp_server.services.get_model_selector", lambda: model_selector)
     monkeypatch.setattr(
-        "nanobanana_mcp_server.tools.generate_image._get_enhanced_image_service",
+        "nanobanana_2_polzaia_mcp_server.tools.generate_image._get_enhanced_image_service",
         lambda: enhanced,
     )
 
@@ -221,7 +221,7 @@ def test_edit_mode_flash_routes_to_enhanced_service(monkeypatch, tmp_path):
 
 @pytest.mark.unit
 def test_generate_mode_nb2_routes_thinking_and_supported_aspect_ratio(monkeypatch, tmp_path):
-    from nanobanana_mcp_server.config.settings import ModelTier
+    from nanobanana_2_polzaia_mcp_server.config.settings import ModelTier
 
     gen_fn = _get_generate_image_fn()
 
@@ -234,9 +234,9 @@ def test_generate_mode_nb2_routes_thinking_and_supported_aspect_ratio(monkeypatc
         name="Gemini 3.1 Flash Image",
     )
 
-    monkeypatch.setattr("nanobanana_mcp_server.services.get_model_selector", lambda: model_selector)
+    monkeypatch.setattr("nanobanana_2_polzaia_mcp_server.services.get_model_selector", lambda: model_selector)
     monkeypatch.setattr(
-        "nanobanana_mcp_server.tools.generate_image._get_enhanced_image_service",
+        "nanobanana_2_polzaia_mcp_server.tools.generate_image._get_enhanced_image_service",
         lambda: enhanced,
     )
 

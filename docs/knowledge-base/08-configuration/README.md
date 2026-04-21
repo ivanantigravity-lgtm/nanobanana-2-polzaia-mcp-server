@@ -52,7 +52,7 @@ All configuration is environment-variable based. Copy `.env.example` → `.env` 
 
 ## Configuration Classes
 
-File: `nanobanana_mcp_server/config/settings.py`
+File: `nanobanana_2_polzaia_mcp_server/config/settings.py`
 
 | Class | Purpose |
 |-------|---------|

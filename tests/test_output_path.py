@@ -13,12 +13,12 @@ import pytest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from nanobanana_mcp_server.utils.validation_utils import (
+from nanobanana_2_polzaia_mcp_server.utils.validation_utils import (
     resolve_output_path,
     validate_output_path,
     IMAGE_EXTENSIONS,
 )
-from nanobanana_mcp_server.core.exceptions import ValidationError
+from nanobanana_2_polzaia_mcp_server.core.exceptions import ValidationError
 
 
 class TestResolveOutputPath:
@@ -246,7 +246,7 @@ class TestOutputPathToolParameter:
 
     def test_generate_image_accepts_output_path(self):
         """Verify generate_image function accepts output_path parameter."""
-        from nanobanana_mcp_server.tools.generate_image import register_generate_image_tool
+        from nanobanana_2_polzaia_mcp_server.tools.generate_image import register_generate_image_tool
         from fastmcp import FastMCP
 
         server = FastMCP("test")
@@ -262,7 +262,7 @@ class TestOutputPathToolParameter:
 
     def test_output_path_has_correct_default(self):
         """Verify output_path defaults to None (not required)."""
-        from nanobanana_mcp_server.tools.generate_image import register_generate_image_tool
+        from nanobanana_2_polzaia_mcp_server.tools.generate_image import register_generate_image_tool
         from fastmcp import FastMCP
 
         server = FastMCP("test")
@@ -281,7 +281,7 @@ class TestEnhancedImageServiceOutputPath:
 
     def test_generate_images_accepts_output_path(self):
         """Verify generate_images method accepts output_path parameter."""
-        from nanobanana_mcp_server.services.enhanced_image_service import EnhancedImageService
+        from nanobanana_2_polzaia_mcp_server.services.enhanced_image_service import EnhancedImageService
         import inspect
 
         sig = inspect.signature(EnhancedImageService.generate_images)
@@ -289,7 +289,7 @@ class TestEnhancedImageServiceOutputPath:
 
     def test_edit_image_by_file_id_accepts_output_path(self):
         """Verify edit_image_by_file_id accepts output_path parameter."""
-        from nanobanana_mcp_server.services.enhanced_image_service import EnhancedImageService
+        from nanobanana_2_polzaia_mcp_server.services.enhanced_image_service import EnhancedImageService
         import inspect
 
         sig = inspect.signature(EnhancedImageService.edit_image_by_file_id)
@@ -297,7 +297,7 @@ class TestEnhancedImageServiceOutputPath:
 
     def test_edit_image_by_path_accepts_output_path(self):
         """Verify edit_image_by_path accepts output_path parameter."""
-        from nanobanana_mcp_server.services.enhanced_image_service import EnhancedImageService
+        from nanobanana_2_polzaia_mcp_server.services.enhanced_image_service import EnhancedImageService
         import inspect
 
         sig = inspect.signature(EnhancedImageService.edit_image_by_path)
@@ -305,7 +305,7 @@ class TestEnhancedImageServiceOutputPath:
 
     def test_process_generated_image_accepts_output_path(self):
         """Verify _process_generated_image accepts output_path parameter."""
-        from nanobanana_mcp_server.services.enhanced_image_service import EnhancedImageService
+        from nanobanana_2_polzaia_mcp_server.services.enhanced_image_service import EnhancedImageService
         import inspect
 
         sig = inspect.signature(EnhancedImageService._process_generated_image)
@@ -313,7 +313,7 @@ class TestEnhancedImageServiceOutputPath:
 
     def test_process_edited_image_accepts_output_path(self):
         """Verify _process_edited_image accepts output_path parameter."""
-        from nanobanana_mcp_server.services.enhanced_image_service import EnhancedImageService
+        from nanobanana_2_polzaia_mcp_server.services.enhanced_image_service import EnhancedImageService
         import inspect
 
         sig = inspect.signature(EnhancedImageService._process_edited_image)

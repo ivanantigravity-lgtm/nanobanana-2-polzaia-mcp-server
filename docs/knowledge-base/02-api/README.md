@@ -5,7 +5,7 @@ This server exposes its API via the MCP protocol (STDIO or HTTP transport).
 ## Tools
 
 ### `generate_image` (primary tool)
-File: `nanobanana_mcp_server/tools/generate_image.py`
+File: `nanobanana_2_polzaia_mcp_server/tools/generate_image.py`
 
 Handles generation, editing, and multi-image conditioning in one unified tool.
 
@@ -48,21 +48,21 @@ Handles generation, editing, and multi-image conditioning in one unified tool.
 ---
 
 ### `upload_file`
-File: `nanobanana_mcp_server/tools/upload_file.py`
+File: `nanobanana_2_polzaia_mcp_server/tools/upload_file.py`
 
 Upload a local file to Gemini Files API. Returns a `file_id` for use with `generate_image`.
 
 ---
 
 ### `output_stats`
-File: `nanobanana_mcp_server/tools/output_stats.py`
+File: `nanobanana_2_polzaia_mcp_server/tools/output_stats.py`
 
 Display statistics about the output directory and recently generated images.
 
 ---
 
 ### `maintenance`
-File: `nanobanana_mcp_server/tools/maintenance.py`
+File: `nanobanana_2_polzaia_mcp_server/tools/maintenance.py`
 
 Run maintenance operations:
 - `cleanup_expired` — Remove expired Files API entries from database
@@ -86,7 +86,7 @@ Run maintenance operations:
 
 ## Prompt Templates
 
-Organized by category in `nanobanana_mcp_server/prompts/`:
+Organized by category in `nanobanana_2_polzaia_mcp_server/prompts/`:
 
 | Category | File | Templates |
 |----------|------|-----------|

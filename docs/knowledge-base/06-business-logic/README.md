@@ -30,7 +30,7 @@ FastMCP Image + JSON metadata returned to client
 
 ## Model Selection Logic
 
-File: `nanobanana_mcp_server/services/model_selector.py`
+File: `nanobanana_2_polzaia_mcp_server/services/model_selector.py`
 
 **Priority (highest first):**
 1. Explicit `model_tier` parameter (`"flash"`, `"nb2"`, or `"pro"`)
@@ -54,7 +54,7 @@ selected = PRO if quality_score > speed_score else NB2
 
 ## Authentication Strategy
 
-File: `nanobanana_mcp_server/config/settings.py` + `services/gemini_client.py`
+File: `nanobanana_2_polzaia_mcp_server/config/settings.py` + `services/gemini_client.py`
 
 **Auto-detection order (`auth_method=auto`):**
 1. If `GEMINI_API_KEY` or `GOOGLE_API_KEY` present → API Key mode

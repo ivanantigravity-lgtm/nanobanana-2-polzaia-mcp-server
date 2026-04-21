@@ -15,7 +15,7 @@ from unittest.mock import patch
 from fastmcp.utilities.types import Image as MCPImage
 import pytest
 
-from nanobanana_mcp_server.config.settings import ServerConfig
+from nanobanana_2_polzaia_mcp_server.config.settings import ServerConfig
 
 pytestmark = pytest.mark.unit
 
@@ -25,7 +25,7 @@ class TestServerConfigReturnFullImage:
 
     def test_default_is_false(self):
         """return_full_image defaults to false when env var is not set."""
-        with patch("nanobanana_mcp_server.config.settings.load_dotenv"), patch.dict(
+        with patch("nanobanana_2_polzaia_mcp_server.config.settings.load_dotenv"), patch.dict(
             os.environ, {"POLZA_AI_API_KEY": "test-key"}, clear=True
         ):
             config = ServerConfig.from_env()
@@ -33,7 +33,7 @@ class TestServerConfigReturnFullImage:
 
     def test_env_var_true(self):
         """return_full_image is true when RETURN_FULL_IMAGE=true."""
-        with patch("nanobanana_mcp_server.config.settings.load_dotenv"), patch.dict(
+        with patch("nanobanana_2_polzaia_mcp_server.config.settings.load_dotenv"), patch.dict(
             os.environ,
             {"POLZA_AI_API_KEY": "test-key", "RETURN_FULL_IMAGE": "true"},
             clear=True,
@@ -43,7 +43,7 @@ class TestServerConfigReturnFullImage:
 
     def test_env_var_false(self):
         """return_full_image is false when RETURN_FULL_IMAGE=false."""
-        with patch("nanobanana_mcp_server.config.settings.load_dotenv"), patch.dict(
+        with patch("nanobanana_2_polzaia_mcp_server.config.settings.load_dotenv"), patch.dict(
             os.environ,
             {"POLZA_AI_API_KEY": "test-key", "RETURN_FULL_IMAGE": "false"},
             clear=True,
@@ -53,7 +53,7 @@ class TestServerConfigReturnFullImage:
 
     def test_env_var_1(self):
         """return_full_image is true when RETURN_FULL_IMAGE=1."""
-        with patch("nanobanana_mcp_server.config.settings.load_dotenv"), patch.dict(
+        with patch("nanobanana_2_polzaia_mcp_server.config.settings.load_dotenv"), patch.dict(
             os.environ,
             {"POLZA_AI_API_KEY": "test-key", "RETURN_FULL_IMAGE": "1"},
             clear=True,
@@ -63,7 +63,7 @@ class TestServerConfigReturnFullImage:
 
     def test_env_var_yes(self):
         """return_full_image is true when RETURN_FULL_IMAGE=yes."""
-        with patch("nanobanana_mcp_server.config.settings.load_dotenv"), patch.dict(
+        with patch("nanobanana_2_polzaia_mcp_server.config.settings.load_dotenv"), patch.dict(
             os.environ,
             {"POLZA_AI_API_KEY": "test-key", "RETURN_FULL_IMAGE": "yes"},
             clear=True,
@@ -73,7 +73,7 @@ class TestServerConfigReturnFullImage:
 
     def test_env_var_invalid(self):
         """return_full_image is false for unrecognized values."""
-        with patch("nanobanana_mcp_server.config.settings.load_dotenv"), patch.dict(
+        with patch("nanobanana_2_polzaia_mcp_server.config.settings.load_dotenv"), patch.dict(
             os.environ,
             {"POLZA_AI_API_KEY": "test-key", "RETURN_FULL_IMAGE": "maybe"},
             clear=True,
@@ -83,7 +83,7 @@ class TestServerConfigReturnFullImage:
 
     def test_env_var_case_insensitive(self):
         """return_full_image parsing is case-insensitive."""
-        with patch("nanobanana_mcp_server.config.settings.load_dotenv"), patch.dict(
+        with patch("nanobanana_2_polzaia_mcp_server.config.settings.load_dotenv"), patch.dict(
             os.environ,
             {"POLZA_AI_API_KEY": "test-key", "RETURN_FULL_IMAGE": "TRUE"},
             clear=True,
@@ -93,7 +93,7 @@ class TestServerConfigReturnFullImage:
 
     def test_env_var_with_whitespace(self):
         """return_full_image handles whitespace in env var value."""
-        with patch("nanobanana_mcp_server.config.settings.load_dotenv"), patch.dict(
+        with patch("nanobanana_2_polzaia_mcp_server.config.settings.load_dotenv"), patch.dict(
             os.environ,
             {"POLZA_AI_API_KEY": "test-key", "RETURN_FULL_IMAGE": " true "},
             clear=True,
@@ -109,7 +109,7 @@ class TestReturnFullImageToolParameter:
         """Verify return_full_image exists in tool JSON schema properties."""
         from fastmcp import FastMCP
 
-        from nanobanana_mcp_server.tools.generate_image import register_generate_image_tool
+        from nanobanana_2_polzaia_mcp_server.tools.generate_image import register_generate_image_tool
 
         server = FastMCP("test")
         register_generate_image_tool(server)
@@ -124,7 +124,7 @@ class TestReturnFullImageToolParameter:
         """Verify return_full_image is not in required params (defaults to None)."""
         from fastmcp import FastMCP
 
-        from nanobanana_mcp_server.tools.generate_image import register_generate_image_tool
+        from nanobanana_2_polzaia_mcp_server.tools.generate_image import register_generate_image_tool
 
         server = FastMCP("test")
         register_generate_image_tool(server)

@@ -159,7 +159,7 @@ graph LR
 1. **Clone Repository** - `git clone https://github.com/zhongweili/nanobanana-mcp-server.git`
 2. **Install Dependencies** - `uv sync`
 3. **Environment Setup** - Copy `.env.example` and add API key
-4. **Local Development** - `uv run python -m nanobanana_mcp_server.server`
+4. **Local Development** - `uv run python -m nanobanana_2_polzaia_mcp_server.server`
 5. **Testing** - `pytest` for test suite
 
 ### Quality Assurance

@@ -8,13 +8,13 @@
 
 **Fix:**
 ```bash
-./scripts/cleanup-ports.sh && fastmcp dev nanobanana_mcp_server.server:create_app
+./scripts/cleanup-ports.sh && fastmcp dev nanobanana_2_polzaia_mcp_server.server:create_app
 ```
 
 Manual cleanup if script doesn't work:
 ```bash
 pkill -f "@modelcontextprotocol/inspector"
-pkill -f "fastmcp.*nanobanana_mcp_server.server"
+pkill -f "fastmcp.*nanobanana_2_polzaia_mcp_server.server"
 ```
 
 ---

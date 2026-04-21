@@ -46,17 +46,17 @@ Same pattern as Claude Desktop — command-based MCP server setup with `uvx nano
 ```bash
 pip install nanobanana-mcp-server
 export GEMINI_API_KEY=your-key
-python -m nanobanana_mcp_server.server
+python -m nanobanana_2_polzaia_mcp_server.server
 ```
 
 ## Development Server
 
 ```bash
 # Recommended (with hot reload via FastMCP inspector)
-./scripts/cleanup-ports.sh && fastmcp dev nanobanana_mcp_server.server:create_app
+./scripts/cleanup-ports.sh && fastmcp dev nanobanana_2_polzaia_mcp_server.server:create_app
 
 # HTTP transport
-FASTMCP_TRANSPORT=http python -m nanobanana_mcp_server.server
+FASTMCP_TRANSPORT=http python -m nanobanana_2_polzaia_mcp_server.server
 ```
 
 ## Transport Modes

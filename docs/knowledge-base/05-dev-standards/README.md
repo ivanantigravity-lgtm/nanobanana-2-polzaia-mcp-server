@@ -74,7 +74,7 @@ Never use `print()` — use the logger from `utils/logging_utils.py`.
 
 ## Service Layer Conventions
 
-- New services go in `nanobanana_mcp_server/services/`
+- New services go in `nanobanana_2_polzaia_mcp_server/services/`
 - Register in `services/__init__.py` global registry
 - Provide getter function: `get_my_service() -> MyService`
 - Use `initialize_services()` for singleton instantiation

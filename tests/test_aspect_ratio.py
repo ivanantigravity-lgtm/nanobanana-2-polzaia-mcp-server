@@ -11,8 +11,8 @@ This module tests the aspect ratio feature added in PR #3, including:
 import pytest
 from unittest.mock import patch
 
-from nanobanana_mcp_server.services.gemini_client import GeminiClient
-from nanobanana_mcp_server.config.settings import ServerConfig, GeminiConfig
+from nanobanana_2_polzaia_mcp_server.services.gemini_client import GeminiClient
+from nanobanana_2_polzaia_mcp_server.config.settings import ServerConfig, GeminiConfig
 
 
 # Supported aspect ratios according to Polza Nano Banana docs
@@ -44,15 +44,15 @@ class TestAspectRatioValidation:
 
     @pytest.mark.parametrize("ratio", ["4:1", "1:4", "8:1", "1:8"])
     def test_extreme_aspect_ratios_are_rejected_for_polza(self, ratio):
-        from nanobanana_mcp_server.core.exceptions import ValidationError
-        from nanobanana_mcp_server.utils.validation_utils import validate_aspect_ratio_string
+        from nanobanana_2_polzaia_mcp_server.core.exceptions import ValidationError
+        from nanobanana_2_polzaia_mcp_server.utils.validation_utils import validate_aspect_ratio_string
 
         with pytest.raises(ValidationError):
             validate_aspect_ratio_string(ratio)
 
     def test_aspect_ratio_literal_type_constraint(self):
         """Verify the tool parameter uses Literal type for type safety."""
-        from nanobanana_mcp_server.tools.generate_image import register_generate_image_tool
+        from nanobanana_2_polzaia_mcp_server.tools.generate_image import register_generate_image_tool
         from fastmcp import FastMCP
         import inspect
 
@@ -62,7 +62,7 @@ class TestAspectRatioValidation:
         register_generate_image_tool(server)
 
         # Get the generate_image function directly from the module
-        from nanobanana_mcp_server.tools import generate_image as gi_module
+        from nanobanana_2_polzaia_mcp_server.tools import generate_image as gi_module
 
         # Find the generate_image function that was decorated
         generate_image_fn = None
@@ -198,7 +198,7 @@ class TestAspectRatioIntegration:
     def test_generate_with_16_9_aspect_ratio(self):
         """Integration test: Generate image with 16:9 aspect ratio."""
         # This would test actual API call
-        # from nanobanana_mcp_server.tools.generate_image import generate_image
+        # from nanobanana_2_polzaia_mcp_server.tools.generate_image import generate_image
         # result = generate_image(prompt="test", aspect_ratio="16:9")
         # assert result is not None
         pass
@@ -216,7 +216,7 @@ class TestAspectRatioServicePropagation:
 
     def test_enhanced_image_service_accepts_aspect_ratio(self):
         """Test EnhancedImageService.generate_images accepts aspect_ratio."""
-        from nanobanana_mcp_server.services.enhanced_image_service import EnhancedImageService
+        from nanobanana_2_polzaia_mcp_server.services.enhanced_image_service import EnhancedImageService
         import inspect
 
         # Check method signature
@@ -225,7 +225,7 @@ class TestAspectRatioServicePropagation:
 
     def test_file_image_service_accepts_aspect_ratio(self):
         """Test FileImageService.generate_images accepts aspect_ratio."""
-        from nanobanana_mcp_server.services.file_image_service import FileImageService
+        from nanobanana_2_polzaia_mcp_server.services.file_image_service import FileImageService
         import inspect
 
         sig = inspect.signature(FileImageService.generate_images)
@@ -233,7 +233,7 @@ class TestAspectRatioServicePropagation:
 
     def test_image_service_accepts_aspect_ratio(self):
         """Test ImageService.generate_images accepts aspect_ratio."""
-        from nanobanana_mcp_server.services.image_service import ImageService
+        from nanobanana_2_polzaia_mcp_server.services.image_service import ImageService
         import inspect
 
         sig = inspect.signature(ImageService.generate_images)

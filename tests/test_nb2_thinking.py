@@ -1,7 +1,7 @@
 import pytest
 
-from nanobanana_mcp_server.config.settings import NanoBanana2Config, ProImageConfig, ServerConfig
-from nanobanana_mcp_server.services.gemini_client import GeminiClient
+from nanobanana_2_polzaia_mcp_server.config.settings import NanoBanana2Config, ProImageConfig, ServerConfig
+from nanobanana_2_polzaia_mcp_server.services.gemini_client import GeminiClient
 
 
 def _build_client(model_config):

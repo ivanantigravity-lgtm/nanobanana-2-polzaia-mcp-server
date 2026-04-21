@@ -31,7 +31,7 @@ uv run python scripts/upload.py
 
 ### Before Each Release
 - [ ] Version updated in `pyproject.toml`
-- [ ] Version updated in `nanobanana_mcp_server/__init__.py`
+- [ ] Version updated in `nanobanana_2_polzaia_mcp_server/__init__.py`
 - [ ] CHANGELOG updated (if you maintain one)
 - [ ] All tests pass: `uv run pytest`
 - [ ] Code formatted: `uv run ruff format .`
@@ -170,7 +170,7 @@ After building, you'll have:
 ```
 dist/
 ├── nanobanana-mcp-server-0.1.0.tar.gz    # Source distribution
-└── nanobanana_mcp_server-0.1.0-py3-none-any.whl  # Wheel distribution
+└── nanobanana_2_polzaia_mcp_server-0.1.0-py3-none-any.whl  # Wheel distribution
 ```
 
 Both files are uploaded to PyPI for maximum compatibility.

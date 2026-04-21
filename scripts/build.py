@@ -84,8 +84,8 @@ def verify_package_config(root_dir: Path) -> None:
     # Check required files
     required_files = [
         ("pyproject.toml", "Project configuration"),
-        ("nanobanana_mcp_server/__init__.py", "Package init"),
-        ("nanobanana_mcp_server/server.py", "Main server module"),
+        ("nanobanana_2_polzaia_mcp_server/__init__.py", "Package init"),
+        ("nanobanana_2_polzaia_mcp_server/server.py", "Main server module"),
     ]
 
     for file_path, description in required_files:

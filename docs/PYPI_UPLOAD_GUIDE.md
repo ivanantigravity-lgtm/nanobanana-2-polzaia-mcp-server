@@ -30,7 +30,7 @@ uv run python -m build
 
 This will create:
 - `dist/nanobanana-mcp-server-0.1.0.tar.gz` (source distribution)
-- `dist/nanobanana_mcp_server-0.1.0-py3-none-any.whl` (wheel distribution)
+- `dist/nanobanana_2_polzaia_mcp_server-0.1.0-py3-none-any.whl` (wheel distribution)
 
 ## Step 3: Test Upload to TestPyPI (Recommended)
 
@@ -137,7 +137,7 @@ password = pypi-your-test-token
 To upload a new version:
 
 1. Update version in `pyproject.toml`
-2. Update version in `nanobanana_mcp_server/__init__.py`
+2. Update version in `nanobanana_2_polzaia_mcp_server/__init__.py`
 3. Rebuild and upload
 
 ```bash
@@ -152,7 +152,7 @@ Your package is now structured for PyPI:
 
 ```
 nanobanana-mcp-server/
-├── nanobanana_mcp_server/          # Main package
+├── nanobanana_2_polzaia_mcp_server/          # Main package
 │   ├── __init__.py                 # Package metadata
 │   ├── server.py                   # Entry point
 │   ├── config/                     # Configuration

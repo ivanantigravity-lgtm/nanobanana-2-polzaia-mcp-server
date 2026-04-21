@@ -6,7 +6,7 @@
         "run",
         "python",
         "-m",
-        "nanobanana_mcp_server.server"
+        "nanobanana_2_polzaia_mcp_server.server"
       ],
       "cwd": ".",
       "env": {
@@ -18,9 +18,9 @@
   },
   "server": {
     "name": "nanobanana-2-polzaia-mcp-server",
-    "version": "0.4.5",
+    "version": "0.4.6",
     "description": "Nano Banana image generation through the Polza media API",
-    "entrypoint": "nanobanana_mcp_server.server:create_app",
+    "entrypoint": "nanobanana_2_polzaia_mcp_server.server:create_app",
     "dependencies": [
       "fastmcp>=2.11.0",
       "pillow>=10.4.0",

@@ -30,7 +30,7 @@ A production-ready Model Context Protocol (MCP) server for AI-powered image gene
 
 ### Package Layout
 ```
-nanobanana_mcp_server/
+nanobanana_2_polzaia_mcp_server/
 ├── __init__.py                 # Package entry point (v0.1.4)
 ├── server.py                   # Main server implementation
 ├── config/                     # Configuration management

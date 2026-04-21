@@ -68,7 +68,7 @@ IMAGE_OUTPUT_DIR=/absolute/path/to/output
 Run locally:
 
 ```bash
-uv run python -m nanobanana_mcp_server.server
+uv run python -m nanobanana_2_polzaia_mcp_server.server
 ```
 
 ## Claude Code / VS Code
@@ -98,7 +98,7 @@ If the user runs from source instead of a published package:
   "mcpServers": {
     "nanobanana-polza-local": {
       "command": "uv",
-      "args": ["run", "python", "-m", "nanobanana_mcp_server.server"],
+      "args": ["run", "python", "-m", "nanobanana_2_polzaia_mcp_server.server"],
       "cwd": "/absolute/path/to/nanobanana-2-polzaia-mcp-server",
       "env": {
         "POLZA_AI_API_KEY": "your-polza-api-key-here",
@@ -153,7 +153,7 @@ Before publishing:
 3. Build and test:
 
 ```bash
-PYTHONPYCACHEPREFIX=/tmp/pycache python3 -m compileall nanobanana_mcp_server tests
+PYTHONPYCACHEPREFIX=/tmp/pycache python3 -m compileall nanobanana_2_polzaia_mcp_server tests
 uv build
 ```
 
