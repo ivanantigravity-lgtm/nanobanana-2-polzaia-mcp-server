@@ -84,9 +84,9 @@ def register_generate_image_tool(server: FastMCP):
             str | None,
             Field(
                 description="Output resolution: 'high', '4k', '2k', '1k'. "
-                "4K and 2K available with 'nb2' and 'pro' models. Default: 'high'."
+                "4K and 2K available with 'nb2' and 'pro' models. Default: '1k'."
             ),
-        ] = "high",
+        ] = "1k",
         thinking_level: Annotated[
             str | None,
             Field(
