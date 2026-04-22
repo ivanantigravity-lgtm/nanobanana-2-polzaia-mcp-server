@@ -5,6 +5,7 @@ import logging
 import mimetypes
 import os
 from pathlib import Path
+import threading
 import time
 from typing import Any
 from urllib.error import HTTPError, URLError
@@ -19,7 +20,7 @@ from ..config.settings import (
     ProImageConfig,
     ServerConfig,
 )
-from ..core.exceptions import AuthenticationError
+from ..core.exceptions import AsyncGenerationPending, AuthenticationError, ValidationError
 
 
 @dataclass
@@ -45,8 +46,24 @@ class GeneratedContentResponse:
     raw: dict[str, Any]
 
 
+@dataclass
+class CachedGeneration:
+    """Process-local cache entry for reusing an existing Polza generation."""
+
+    media_id: str
+    fingerprint: str
+    created_at: float
+    last_seen_at: float
+    status: str
+    forced_regenerations: int = 0
+    response: dict[str, Any] | None = None
+
+
 class GeminiClient:
     """Wrapper for Polza media/storage APIs with the legacy GeminiClient interface."""
+
+    _generation_cache: dict[str, CachedGeneration] = {}
+    _generation_cache_lock = threading.Lock()
 
     def __init__(
         self,
@@ -124,6 +141,7 @@ class GeminiClient:
         contents: list,
         config: dict[str, Any] | None = None,
         aspect_ratio: str | None = None,
+        force_new_generation: bool = False,
         **kwargs,
     ) -> GeneratedContentResponse:
         """Generate content through Polza and return normalized image bytes."""
@@ -138,7 +156,7 @@ class GeminiClient:
                     "prompt": prompt,
                     "output_format": getattr(self.gemini_config, "default_image_format", "png"),
                 },
-                "async": False,
+                "async": True,
             }
 
             if images:
@@ -153,11 +171,28 @@ class GeminiClient:
             if self.config.polza_external_user_id:
                 payload["user"] = self.config.polza_external_user_id
 
-            response = self._request_json("POST", "/v1/media", payload)
+            fingerprint = self._build_generation_fingerprint(payload)
+
+            if force_new_generation:
+                self._increment_forced_regeneration_count(fingerprint)
+                response = self._request_json("POST", "/v1/media", payload)
+                self._cache_generation_response(fingerprint, response)
+            else:
+                cached_response = self._get_cached_generation_response(fingerprint)
+                if cached_response is not None:
+                    response = cached_response
+                else:
+                    response = self._request_json("POST", "/v1/media", payload)
+                    self._cache_generation_response(fingerprint, response)
+
             if not isinstance(response, dict):
                 raise RuntimeError(f"Unexpected media response type: {type(response).__name__}")
 
-            final_response = self._resolve_media_response(response)
+            final_response = self._resolve_media_response(
+                response,
+                fingerprint=fingerprint,
+                max_wait_seconds=self.config.polza_sync_wait_seconds,
+            )
             image_urls = self._extract_output_urls(final_response)
             generated_images = [self._download_bytes(url) for url in image_urls]
 
@@ -367,27 +402,48 @@ class GeminiClient:
         if not wait:
             return response
 
-        return self._resolve_media_response(response)
+        return self._resolve_media_response(
+            response,
+            max_wait_seconds=self.config.polza_poll_timeout_seconds,
+        )
 
     def download_bytes(self, url: str) -> bytes:
         """Public helper to download a generated asset by URL."""
         return self._download_bytes(url)
 
-    def _resolve_media_response(self, response: dict[str, Any]) -> dict[str, Any]:
+    def _resolve_media_response(
+        self,
+        response: dict[str, Any],
+        *,
+        fingerprint: str | None = None,
+        max_wait_seconds: float | None = None,
+    ) -> dict[str, Any]:
         status = (response.get("status") or "").lower()
         if status == "completed":
+            self._cache_generation_response(fingerprint, response)
             return response
         if status == "failed":
+            self._cache_generation_response(fingerprint, response)
             error = response.get("error") or {}
             raise RuntimeError(error.get("message") or "Media generation failed")
 
         media_id = response.get("id")
         if not media_id:
             return response
-        return self._poll_media_status(media_id)
+        return self._poll_media_status(
+            media_id,
+            fingerprint=fingerprint,
+            max_wait_seconds=max_wait_seconds or self.config.polza_poll_timeout_seconds,
+        )
 
-    def _poll_media_status(self, media_id: str) -> dict[str, Any]:
-        deadline = time.time() + self.config.polza_poll_timeout_seconds
+    def _poll_media_status(
+        self,
+        media_id: str,
+        *,
+        fingerprint: str | None = None,
+        max_wait_seconds: float,
+    ) -> dict[str, Any]:
+        deadline = time.time() + max_wait_seconds
         last_response: dict[str, Any] | None = None
 
         while time.time() < deadline:
@@ -396,6 +452,7 @@ class GeminiClient:
                 raise RuntimeError(f"Unexpected polling response for media {media_id}")
 
             last_response = response
+            self._cache_generation_response(fingerprint, response)
             status = (response.get("status") or "").lower()
             if status == "completed":
                 return response
@@ -407,7 +464,16 @@ class GeminiClient:
 
             time.sleep(self.config.polza_poll_interval_seconds)
 
-        raise TimeoutError(f"Timed out waiting for media generation {media_id}: {last_response}")
+        pending_status = (
+            (last_response.get("status") or "").lower()
+            if isinstance(last_response, dict)
+            else "pending"
+        )
+        raise AsyncGenerationPending(
+            media_id=media_id,
+            status=pending_status or "pending",
+            response=last_response or {"id": media_id, "status": "pending"},
+        )
 
     def _extract_output_urls(self, response: dict[str, Any]) -> list[str]:
         data = response.get("data")
@@ -483,3 +549,81 @@ class GeminiClient:
             update_time=payload.get("updatedAt"),
             expires_at=payload.get("expiresAt"),
         )
+
+    def _build_generation_fingerprint(self, payload: dict[str, Any]) -> str:
+        normalized = json.dumps(payload, sort_keys=True, ensure_ascii=False)
+        return str(uuid.uuid5(uuid.NAMESPACE_URL, normalized))
+
+    def _get_cached_generation_response(self, fingerprint: str) -> dict[str, Any] | None:
+        self._prune_generation_cache()
+        cached_media_id: str | None = None
+        with self._generation_cache_lock:
+            cached = self._generation_cache.get(fingerprint)
+            if not cached:
+                return None
+            cached.last_seen_at = time.time()
+            if cached.response and cached.status == "completed":
+                return cached.response
+            cached_media_id = cached.media_id
+
+        if not cached_media_id:
+            return None
+        return self._request_json("GET", f"/v1/media/{cached_media_id}")
+
+    def _cache_generation_response(
+        self, fingerprint: str | None, response: dict[str, Any] | list[Any] | None
+    ) -> None:
+        if not fingerprint or not isinstance(response, dict):
+            return
+
+        media_id = response.get("id")
+        if not media_id:
+            return
+
+        status = (response.get("status") or "pending").lower()
+        with self._generation_cache_lock:
+            existing = self._generation_cache.get(fingerprint)
+            forced_regenerations = existing.forced_regenerations if existing else 0
+            created_at = existing.created_at if existing else time.time()
+            self._generation_cache[fingerprint] = CachedGeneration(
+                media_id=media_id,
+                fingerprint=fingerprint,
+                created_at=created_at,
+                last_seen_at=time.time(),
+                status=status,
+                forced_regenerations=forced_regenerations,
+                response=response,
+            )
+
+    def _increment_forced_regeneration_count(self, fingerprint: str) -> None:
+        self._prune_generation_cache()
+        with self._generation_cache_lock:
+            existing = self._generation_cache.get(fingerprint)
+            forced_regenerations = (existing.forced_regenerations if existing else 0) + 1
+            if forced_regenerations > self.config.polza_max_forced_regenerations:
+                raise ValidationError(
+                    "The same image request hit the forced-regeneration limit "
+                    f"({self.config.polza_max_forced_regenerations}). "
+                    "Ask the user before starting it again."
+                )
+
+            self._generation_cache[fingerprint] = CachedGeneration(
+                media_id=existing.media_id if existing else "",
+                fingerprint=fingerprint,
+                created_at=existing.created_at if existing else time.time(),
+                last_seen_at=time.time(),
+                status=existing.status if existing else "forced",
+                forced_regenerations=forced_regenerations,
+                response=existing.response if existing else None,
+            )
+
+    def _prune_generation_cache(self) -> None:
+        now = time.time()
+        with self._generation_cache_lock:
+            stale_keys = [
+                key
+                for key, value in self._generation_cache.items()
+                if now - value.last_seen_at > self.config.polza_generation_cache_ttl_seconds
+            ]
+            for key in stale_keys:
+                self._generation_cache.pop(key, None)

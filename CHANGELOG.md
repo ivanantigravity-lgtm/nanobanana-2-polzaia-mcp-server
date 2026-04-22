@@ -21,6 +21,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - README rewritten in Russian.
 
+## [0.5.1] - 2026-04-22
+
+### Fixed
+- **No duplicate image generations on retries**: identical requests now reuse the
+  same upstream `media_id` instead of starting a new Polza generation when the
+  previous one is still `pending` / `processing` or already `completed`.
+- **Async-first Polza flow**: image generation now starts with `async: true`,
+  then polls `GET /v1/media/{id}` instead of waiting for a long synchronous
+  response that many MCP clients time out on.
+- **Pending generation handoff**: `generate_image` now returns a structured
+  pending response with `media_id` and explicit next-step guidance to poll via
+  `fetch_generation`, so the agent does not blindly regenerate.
+- **Forced rerun guardrail**: added `force_new_generation` for intentional
+  reruns only, with a hard limit of 5 forced regenerations for the same request
+  fingerprint before the server blocks more duplicates and requires explicit
+  user confirmation.
+- **Polling defaults**: aligned default poll interval with Polza guidance by
+  moving from 2s to 3s.
+
+### Added
+- **Regression tests** for async timeout handoff, deduped generation reuse, and
+  forced-rerun limits.
+
 ## [0.4.4] - 2026-03-27
 
 ### Fixed

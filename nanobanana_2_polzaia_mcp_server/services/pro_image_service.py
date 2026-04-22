@@ -53,6 +53,7 @@ class ProImageService:
         system_instruction: str | None = None,
         input_images: list[tuple[str, str]] | None = None,
         use_storage: bool = True,
+        force_new_generation: bool = False,
     ) -> tuple[list[MCPImage], list[dict[str, Any]]]:
         """
         Generate high-quality images using Gemini 3 Pro Image.
@@ -163,6 +164,7 @@ class ProImageService:
                         contents,
                         config=gen_config,
                         aspect_ratio=aspect_ratio,
+                        force_new_generation=force_new_generation,
                     )
                     images = self.gemini_client.extract_images(response)
 
@@ -332,6 +334,7 @@ class ProImageService:
         thinking_level: ThinkingLevel | None = None,
         media_resolution: MediaResolution | None = None,
         use_storage: bool = True,
+        force_new_generation: bool = False,
     ) -> tuple[list[MCPImage], list[dict[str, Any]]]:
         """
         Edit an image and return thumbnails + per-image metadata.
@@ -390,7 +393,11 @@ class ProImageService:
             if self.config.supports_media_resolution:
                 gen_config["media_resolution"] = media_resolution.value
 
-            response = self.gemini_client.generate_content(contents, config=gen_config)
+            response = self.gemini_client.generate_content(
+                contents,
+                config=gen_config,
+                force_new_generation=force_new_generation,
+            )
             image_bytes_list = self.gemini_client.extract_images(response)
 
             progress.update(70, "Processing edited image(s)...")
@@ -512,6 +519,7 @@ class ProImageService:
         thinking_level: ThinkingLevel | None = None,
         media_resolution: MediaResolution | None = None,
         use_storage: bool = True,
+        force_new_generation: bool = False,
     ) -> tuple[list[MCPImage], int]:
         """
         Edit images with Pro model's enhanced understanding.
@@ -539,6 +547,7 @@ class ProImageService:
             thinking_level=thinking_level,
             media_resolution=media_resolution,
             use_storage=use_storage,
+            force_new_generation=force_new_generation,
         )
         return edited_images, len(edited_images)
 

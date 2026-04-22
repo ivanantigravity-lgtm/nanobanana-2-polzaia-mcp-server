@@ -1,5 +1,8 @@
 """Custom exceptions for the Nano Banana 2 Polza MCP Server."""
 
+from dataclasses import dataclass
+from typing import Any
+
 
 class NanoBananaError(Exception):
     """Base exception class for all Nano Banana errors."""
@@ -47,3 +50,15 @@ class ADCConfigurationError(AuthenticationError):
     """Raised when an unsupported legacy authentication mode is requested."""
 
     pass
+
+
+@dataclass
+class AsyncGenerationPending(NanoBananaError):
+    """Raised when a generation is still running and should be polled, not restarted."""
+
+    media_id: str
+    status: str
+    response: dict[str, Any]
+
+    def __str__(self) -> str:
+        return f"Generation {self.media_id} is still {self.status}"

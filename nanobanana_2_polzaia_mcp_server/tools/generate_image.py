@@ -11,7 +11,7 @@ from pydantic import Field
 
 from ..config.constants import MAX_INPUT_IMAGES
 from ..config.settings import ModelTier, ThinkingLevel
-from ..core.exceptions import ValidationError
+from ..core.exceptions import AsyncGenerationPending, ValidationError
 from ..utils.validation_utils import validate_output_path
 
 
@@ -128,6 +128,13 @@ def register_generate_image_tool(server: FastMCP):
                 "Default: uses RETURN_FULL_IMAGE env var, or false if not set."
             ),
         ] = None,
+        force_new_generation: Annotated[
+            bool,
+            Field(
+                description="Start a brand-new upstream generation even if the same request is already pending or recently completed. "
+                "Use only after the user explicitly confirmed they want a rerun."
+            ),
+        ] = False,
         _ctx: Context | None = None,
     ) -> ToolResult:
         """
@@ -246,7 +253,10 @@ def register_generate_image_tool(server: FastMCP):
                             f"Edit mode (FLASH): using file_id {file_id}, output_path={output_path}"
                         )
                         thumbnail_images, metadata = enhanced_image_service.edit_image_by_file_id(
-                            file_id=file_id, edit_prompt=prompt, output_path=output_path
+                            file_id=file_id,
+                            edit_prompt=prompt,
+                            output_path=output_path,
+                            force_new_generation=force_new_generation,
                         )
                     else:
                         # Edit by file path
@@ -257,6 +267,7 @@ def register_generate_image_tool(server: FastMCP):
                             instruction=prompt,
                             file_path=input_image_paths[0],
                             output_path=output_path,
+                            force_new_generation=force_new_generation,
                         )
                 else:
                     # PRO / NB2 edit path uses ProImageService (selected_service)
@@ -279,6 +290,7 @@ def register_generate_image_tool(server: FastMCP):
                                 else None
                             ),
                             use_storage=True,
+                            force_new_generation=force_new_generation,
                         )
                         for meta in metadata:
                             if isinstance(meta, dict):
@@ -312,6 +324,7 @@ def register_generate_image_tool(server: FastMCP):
                                 else None
                             ),
                             use_storage=True,
+                            force_new_generation=force_new_generation,
                         )
                         for meta in metadata:
                             if isinstance(meta, dict):
@@ -371,6 +384,7 @@ def register_generate_image_tool(server: FastMCP):
                         system_instruction=system_instruction,
                         input_images=input_images,
                         use_storage=True,
+                        force_new_generation=force_new_generation,
                     )
                 elif selected_tier == ModelTier.NB2:
                     # Use NB2 service (Flash speed + Pro quality, supports thinking)
@@ -387,6 +401,7 @@ def register_generate_image_tool(server: FastMCP):
                         system_instruction=system_instruction,
                         input_images=input_images,
                         use_storage=True,
+                        force_new_generation=force_new_generation,
                     )
                 else:
                     # Use Flash service (via enhanced_image_service) for speed
@@ -399,8 +414,8 @@ def register_generate_image_tool(server: FastMCP):
                         input_images=input_images,
                         aspect_ratio=aspect_ratio,
                         output_path=output_path,
+                        force_new_generation=force_new_generation,
                     )
-
             # Resolve return_full_image: tool param > server config > env var > default (false)
             effective_return_full_image = return_full_image
             if effective_return_full_image is None:
@@ -610,6 +625,36 @@ def register_generate_image_tool(server: FastMCP):
             )
 
             return ToolResult(content=content, structured_content=structured_content)
+
+        except AsyncGenerationPending as pending:
+            poll_after_seconds = 5
+            summary = (
+                "⏳ Генерация уже запущена и всё ещё выполняется. "
+                "Новый ререндер не стартовал.\n\n"
+                f"media_id: {pending.media_id}\n"
+                f"status: {pending.status}\n"
+                f"Что делать дальше: подождать {poll_after_seconds} сек и вызвать "
+                f"fetch_generation(media_id=\"{pending.media_id}\") либо повторить этот же запрос "
+                "без `force_new_generation`.\n"
+                "Если пользователь действительно хочет новый ререндер, сначала спросите его явно. "
+                "После 5 принудительных перезапусков сервер блокирует новые дубли."
+            )
+            structured_content = {
+                "status": pending.status,
+                "media_id": pending.media_id,
+                "pending": True,
+                "reused_existing_generation": not force_new_generation,
+                "suggested_poll_after_seconds": poll_after_seconds,
+                "next_action": {
+                    "tool": "fetch_generation",
+                    "arguments": {"media_id": pending.media_id, "wait": True},
+                },
+                "raw": pending.response,
+            }
+            return ToolResult(
+                content=[TextContent(type="text", text=summary)],
+                structured_content=structured_content,
+            )
 
         except ValidationError as e:
             logger.error(f"Validation error in generate_image: {e}")

@@ -32,6 +32,7 @@ class ImageService:
         input_images: Optional[List[Tuple[str, str]]] = None,
         aspect_ratio: Optional[str] = None,
         use_storage: bool = True,
+        force_new_generation: bool = False,
     ) -> Tuple[List[MCPImage], List[Dict[str, Any]]]:
         """
         Generate images using Gemini API.
@@ -85,7 +86,9 @@ class ImageService:
                     progress.update(20 + (i * 60 // n), f"Generating image {i + 1}/{n}...")
 
                     response = self.gemini_client.generate_content(
-                        contents, aspect_ratio=aspect_ratio
+                        contents,
+                        aspect_ratio=aspect_ratio,
+                        force_new_generation=force_new_generation,
                     )
                     images = self.gemini_client.extract_images(response)
 
@@ -186,6 +189,7 @@ class ImageService:
         base_image_b64: str,
         mime_type: str = "image/png",
         use_storage: bool = True,
+        force_new_generation: bool = False,
     ) -> Tuple[List[MCPImage], int]:
         """
         Edit an image using conversational instructions.
@@ -218,7 +222,10 @@ class ImageService:
                 progress.update(40, "Sending edit request to Gemini API...")
 
                 # Generate edited image
-                response = self.gemini_client.generate_content(contents)
+                response = self.gemini_client.generate_content(
+                    contents,
+                    force_new_generation=force_new_generation,
+                )
                 image_bytes_list = self.gemini_client.extract_images(response)
 
                 progress.update(70, "Processing edited image(s)...")

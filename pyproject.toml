@@ -1,6 +1,6 @@
 [project]
 name = "nanobanana-2-polzaia-mcp-server"
-version = "0.5.0"
+version = "0.5.1"
 description = "An MCP server for Nano Banana image generation through the Polza media API"
 authors = [
     { name = "zhongwei", email = "lizhongwei.nkcs@gmail.com" }

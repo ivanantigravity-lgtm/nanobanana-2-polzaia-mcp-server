@@ -57,8 +57,11 @@ class ServerConfig:
     gcp_project_id: str | None = None
     gcp_region: str = "us-central1"
     gemini_base_url: str | None = None
-    polza_poll_interval_seconds: float = 2.0
+    polza_poll_interval_seconds: float = 3.0
     polza_poll_timeout_seconds: int = 120
+    polza_sync_wait_seconds: int = 45
+    polza_generation_cache_ttl_seconds: int = 900
+    polza_max_forced_regenerations: int = 5
     polza_external_user_id: str | None = None
 
     @classmethod
@@ -113,8 +116,15 @@ class ServerConfig:
             gcp_project_id=gcp_project,
             gcp_region=gcp_region,
             gemini_base_url=gemini_base_url,
-            polza_poll_interval_seconds=float(os.getenv("POLZA_POLL_INTERVAL_SECONDS", "2")),
+            polza_poll_interval_seconds=float(os.getenv("POLZA_POLL_INTERVAL_SECONDS", "3")),
             polza_poll_timeout_seconds=int(os.getenv("POLZA_POLL_TIMEOUT_SECONDS", "120")),
+            polza_sync_wait_seconds=int(os.getenv("POLZA_SYNC_WAIT_SECONDS", "45")),
+            polza_generation_cache_ttl_seconds=int(
+                os.getenv("POLZA_GENERATION_CACHE_TTL_SECONDS", "900")
+            ),
+            polza_max_forced_regenerations=int(
+                os.getenv("POLZA_MAX_FORCED_REGENERATIONS", "5")
+            ),
             polza_external_user_id=os.getenv("POLZA_EXTERNAL_USER_ID") or None,
             transport=os.getenv("FASTMCP_TRANSPORT", "stdio"),
             host=os.getenv("FASTMCP_HOST", "127.0.0.1"),

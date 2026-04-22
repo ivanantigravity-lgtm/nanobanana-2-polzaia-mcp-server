@@ -73,6 +73,7 @@ class EnhancedImageService:
         input_images: Optional[List[Tuple[str, str]]] = None,
         aspect_ratio: Optional[str] = None,
         output_path: Optional[str] = None,
+        force_new_generation: bool = False,
     ) -> Tuple[List[MCPImage], List[Dict[str, Any]]]:
         """
         Generate images following the complete workflow from workflows.md.
@@ -133,7 +134,9 @@ class EnhancedImageService:
 
                     # Step 1-2: M->>G: generateContent -> G-->>M: inline image bytes
                     response = self.gemini_client.generate_content(
-                        contents, aspect_ratio=aspect_ratio
+                        contents,
+                        aspect_ratio=aspect_ratio,
+                        force_new_generation=force_new_generation,
                     )
                     images = self.gemini_client.extract_images(response)
 
@@ -170,7 +173,11 @@ class EnhancedImageService:
             raise
 
     def edit_image_by_file_id(
-        self, file_id: str, edit_prompt: str, output_path: Optional[str] = None
+        self,
+        file_id: str,
+        edit_prompt: str,
+        output_path: Optional[str] = None,
+        force_new_generation: bool = False,
     ) -> Tuple[List[MCPImage], List[Dict[str, Any]]]:
         """
         Edit image by file_id following workflows.md pattern.
@@ -207,7 +214,10 @@ class EnhancedImageService:
 
             # Step 4: M->>G: generateContent with file_data + edit_prompt
             contents = [file_data_part, edit_prompt]
-            response = self.gemini_client.generate_content(contents)
+            response = self.gemini_client.generate_content(
+                contents,
+                force_new_generation=force_new_generation,
+            )
 
             # Step 5: G-->>M: inline edited image
             edited_images = self.gemini_client.extract_images(response)
@@ -242,7 +252,11 @@ class EnhancedImageService:
             raise
 
     def edit_image_by_path(
-        self, instruction: str, file_path: str, output_path: Optional[str] = None
+        self,
+        instruction: str,
+        file_path: str,
+        output_path: Optional[str] = None,
+        force_new_generation: bool = False,
     ) -> Tuple[List[MCPImage], List[Dict[str, Any]]]:
         """
         Edit image from local file path following workflows.md pattern for path-based editing.
@@ -289,7 +303,10 @@ class EnhancedImageService:
             contents = image_parts + [instruction]
 
             # Generate edited image
-            response = self.gemini_client.generate_content(contents)
+            response = self.gemini_client.generate_content(
+                contents,
+                force_new_generation=force_new_generation,
+            )
             edited_images = self.gemini_client.extract_images(response)
 
             if not edited_images:
