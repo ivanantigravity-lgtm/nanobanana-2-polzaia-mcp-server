@@ -350,6 +350,29 @@ class GeminiClient:
         except URLError as exc:
             raise RuntimeError(f"Network error during upload: {exc}") from exc
 
+    def fetch_media_by_id(self, media_id: str, wait: bool = True) -> dict[str, Any]:
+        """Fetch a Polza media generation by id.
+
+        When `wait=True`, polls until status is `completed` or `failed`, respecting
+        `polza_poll_timeout_seconds`. When `wait=False`, returns the raw response
+        as-is (useful for async-style inspection).
+        """
+        if not media_id:
+            raise ValueError("media_id is required")
+
+        response = self._request_json("GET", f"/v1/media/{media_id}")
+        if not isinstance(response, dict):
+            raise RuntimeError(f"Unexpected media response for {media_id}")
+
+        if not wait:
+            return response
+
+        return self._resolve_media_response(response)
+
+    def download_bytes(self, url: str) -> bytes:
+        """Public helper to download a generated asset by URL."""
+        return self._download_bytes(url)
+
     def _resolve_media_response(self, response: dict[str, Any]) -> dict[str, Any]:
         status = (response.get("status") or "").lower()
         if status == "completed":

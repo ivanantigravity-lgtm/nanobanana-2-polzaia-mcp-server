@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-04-22
+
+### Added
+- **`fetch_generation` tool**: recover a Polza media generation by its
+  `gen_...` id — GETs `/v1/media/{id}`, optionally polls until the job is
+  `completed`, downloads the asset(s) and saves them locally. This is the
+  escape hatch for when the MCP client aborts `generate_image` on its own
+  timeout while Polza is still finishing the job server-side, so users do
+  not have to re-run (and re-pay for) the generation.
+- **`GeminiClient.fetch_media_by_id` / `GeminiClient.download_bytes`**:
+  public helpers for fetching and downloading media outside of the
+  generation flow.
+
+### Changed
+- README rewritten in Russian.
+
 ## [0.4.4] - 2026-03-27
 
 ### Fixed
